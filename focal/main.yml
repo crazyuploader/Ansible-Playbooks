@@ -1,67 +1,68 @@
----
 - hosts: all
   become: true
   vars_files:
-      - vars/default.yml
-
+    - vars/default.yml
   tasks:
-      - name: Install aptitude using apt
-        apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
-
-      - name: Update all packages to their latest version
-        apt:
-            name: "*"
-            state: latest
-
-      - name: Install required system packages
-        apt: name={{ item }} state=latest update_cache=yes
-        loop:
-            [
-                "apt-transport-https",
-                "ca-certificates",
-                "curl",
-                "software-properties-common",
-                "python3-pip",
-                "virtualenv",
-                "python3-setuptools",
-                "python-is-python3",
-                "neofetch",
-                "traceroute",
-                "mtr-tiny",
-                "dnsutils",
-                "nmap",
-            ]
-
-      - name: Add Docker GPG apt Key
-        apt_key:
-            url: https://download.docker.com/linux/ubuntu/gpg
-            state: present
-
-      - name: Add Docker Repository
-        apt_repository:
-            repo: deb https://download.docker.com/linux/ubuntu focal stable
-            state: present
-
-      - name: Update apt and install docker-ce
-        apt:
-            update_cache: yes
-            name: docker-ce, docker-ce-cli, containerd.io
-            state: latest
-
-      - name: Install Docker Module for Python
-        pip:
-            name: docker
-
-      - name: Pull default Docker image
-        docker_image:
-            name: "{{ container_image }}"
-            source: pull
-
-      - name: Create default containers
-        docker_container:
-            name: "{{ container_name }}{{ item }}"
-            image: "{{ container_image }}"
-            command: "{{ container_command }}"
-            state: present
-
-        with_sequence: count={{ containers }}
+    - name: Install aptitude using apt
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+    - name: Update all packages to their latest version
+      apt:
+        name: '*'
+        state: latest
+    - name: Install required system packages
+      apt: 'name={{ item }} state=latest update_cache=yes'
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - dnsutils
+        - git
+        - iftop
+        - jq
+        - mtr-tiny
+        - nano
+        - neofetch
+        - net-tools
+        - nmap
+        - python3-pip
+        - python3-setuptools
+        - python-is-python3
+        - screen
+        - shellcheck
+        - software-properties-common
+        - tar
+        - tmux
+        - traceroute
+        - tree
+        - unzip
+        - virtualenv
+        - wget
+        - xz-utils
+        - zip
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: 'https://download.docker.com/linux/ubuntu/gpg'
+        state: present
+    - name: Add Docker Repository
+      apt_repository:
+        repo: 'deb https://download.docker.com/linux/ubuntu focal stable'
+        state: present
+    - name: Update apt and install docker-ce
+      apt:
+        update_cache: 'yes'
+        name: 'docker-ce, docker-ce-cli, containerd.io'
+        state: latest
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+    - name: Pull default Docker image
+      docker_image:
+        name: '{{ container_image }}'
+        source: pull
+    - name: Create default containers
+      docker_container:
+        name: '{{ container_name }}{{ item }}'
+        image: '{{ container_image }}'
+        command: '{{ container_command }}'
+        state: present
+      with_sequence: 'count={{ containers }}'
