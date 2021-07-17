@@ -9,7 +9,7 @@
       apt:
         name: '*'
         state: latest
-    - name: Install required system packages
+    - name: Install packages
       apt: 'name={{ item }} state=latest update_cache=yes'
       loop:
         - apt-transport-https
@@ -26,7 +26,6 @@
         - nmap
         - python3-pip
         - python3-setuptools
-        - python-is-python3
         - screen
         - shellcheck
         - software-properties-common
@@ -35,6 +34,7 @@
         - traceroute
         - tree
         - unzip
+        - vim
         - virtualenv
         - wget
         - xz-utils
