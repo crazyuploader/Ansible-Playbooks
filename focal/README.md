@@ -3,5 +3,5 @@
 ## Usage
 
 ```
-ansible-playbook main.yml
+ansible-playbook main.yml -l server01
 ```
