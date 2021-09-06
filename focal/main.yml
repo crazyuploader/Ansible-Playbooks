@@ -7,10 +7,10 @@
       apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
     - name: Update all packages to their latest version
       apt:
-        name: '*'
+        name: "*"
         state: latest
     - name: Install packages
-      apt: 'name={{ item }} state=latest update_cache=yes'
+      apt: "name={{ item }} state=latest update_cache=yes"
       loop:
         - apt-transport-https
         - ca-certificates
@@ -39,30 +39,33 @@
         - wget
         - xz-utils
         - zip
+    - name: Confirm Docker Installation
+      pause:
+        prompt: Do you want to install Docker as well? Press return to continue. Press Ctrl+c and then "a" to abort
     - name: Add Docker GPG apt Key
       apt_key:
-        url: 'https://download.docker.com/linux/ubuntu/gpg'
+        url: "https://download.docker.com/linux/ubuntu/gpg"
         state: present
     - name: Add Docker Repository
       apt_repository:
-        repo: 'deb https://download.docker.com/linux/ubuntu focal stable'
+        repo: "deb https://download.docker.com/linux/ubuntu focal stable"
         state: present
     - name: Update apt and install docker-ce
       apt:
-        update_cache: 'yes'
-        name: 'docker-ce, docker-ce-cli, containerd.io'
+        update_cache: "yes"
+        name: "docker-ce, docker-ce-cli, containerd.io"
         state: latest
     - name: Install Docker Module for Python
       pip:
         name: docker
     - name: Pull default Docker image
       docker_image:
-        name: '{{ container_image }}'
+        name: "{{ container_image }}"
         source: pull
     - name: Create default containers
       docker_container:
-        name: '{{ container_name }}{{ item }}'
-        image: '{{ container_image }}'
-        command: '{{ container_command }}'
+        name: "{{ container_name }}{{ item }}"
+        image: "{{ container_image }}"
+        command: "{{ container_command }}"
         state: present
-      with_sequence: 'count={{ containers }}'
+      with_sequence: "count={{ containers }}"
