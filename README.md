@@ -4,4 +4,5 @@
 
 ## Setup
 
+- [Add jungle User & Disable Root Login](setup/jungle.yml)
 - [Ubuntu Focal With Docker](setup/ubuntu_focal_with_docker.yml)
