@@ -1,0 +1,41 @@
+- hosts: all
+  become: true
+  gather_facts: no
+  tasks:
+    - name: Add 'jungle' User
+      ansible.builtin.user:
+        name: jungle
+        shell: /usr/bin/bash
+        groups: sudo, docker
+
+    - name: Add 'jungle' User to the sudoers
+      copy:
+        dest: "/etc/sudoers.d/jungle"
+        content: "jungle ALL=(ALL) NOPASSWD: ALL"
+
+    - name: Add SSH Public Key for 'jungle' User
+      authorized_key:
+        user: jungle
+        state: present
+        key: https://keys.devjugal.com/ssh
+
+    - name: Disable Password Authentication
+      ansible.builtin.lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        regexp: "^PasswordAuthentication"
+        line: "PasswordAuthentication no"
+        state: present
+        backup: yes
+
+    - name: Disable Root Login
+      ansible.builtin.lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        regexp: "^PermitRootLogin"
+        line: "PermitRootLogin no"
+        state: present
+        backup: yes
+
+    - name: Restart SSH Service
+      service:
+        name: sshd
+        state: restarted
