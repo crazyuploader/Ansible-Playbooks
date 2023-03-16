@@ -1,4 +1,4 @@
-# Playbook to Setup Ubuntu Focal
+# Playbook to Setup Ubuntu
 
 ## Usage
 
