@@ -38,6 +38,11 @@
         - wget
         - xz-utils
         - zip
+    - name: Install pip packages
+      ansible.builtin.pip:
+        name:
+          - bpytop
+          - jc
     - name: Confirm Docker Installation
       pause:
         prompt: Do you want to install Docker as well? Press return to continue. Press Ctrl+c and then "a" to abort
