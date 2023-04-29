@@ -2,17 +2,17 @@
 - name: Upgrade all apt packages to latest
   hosts: all
   become: true
-  
-  tasks:
-  - name: Update apt cache
-    apt:
-      update_cache: yes
 
-  - name: Upgrade all packages
-    apt:
-      upgrade: dist
-      
-  - name: Cleanup apt cache
-    apt:
-      autoclean: yes
-      autoremove: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+      register: apt_upgrade_output
+
+    - name: Print packages to be upgraded
+      debug:
+        var: apt_upgrade_output.stdout_lines
