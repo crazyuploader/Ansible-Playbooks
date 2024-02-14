@@ -1,0 +1,39 @@
+---
+- name: Upgrade Cloudflared
+  hosts: Pi, Server01, Server03
+  become: yes
+
+  vars:
+    deb_urls:
+      amd64: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb"
+      arm64: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb"
+
+    service_names:
+      Pi: "cloudflared.service"
+      Server01: "thelasthour.service"
+      Server03: "cloudflared.service"
+
+  tasks:
+    - name: Check Architecture
+      command: dpkg --print-architecture
+      register: dpkg_architecture
+      changed_when: false
+
+    - name: Set Architecture Specific URL
+      set_fact:
+        deb_url: "{{ deb_urls[dpkg_architecture.stdout] }}"
+
+    - name: Download Cloudflared .deb Package
+      get_url:
+        url: "{{ deb_url }}"
+        dest: "/tmp/cloudflared.deb"
+
+    - name: Upgrade Cloudflared
+      apt:
+        deb: "/tmp/cloudflared.deb"
+        state: present
+    - name: Restart Cloudflared Service
+      systemd:
+        name: "{{ service_names[inventory_hostname] }}"
+        state: restarted
+      when: ansible_facts['previous_task'] is defined and ansible_facts['previous_task']['changed'] == true
