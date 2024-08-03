@@ -14,7 +14,7 @@ This repository contains a variety of Ansible playbooks that automate different 
 
 ### Cloudflared
 
-- **[Upgrade Cloudflared](cloudflare/upgrade.yml)**: This playbook upgrades installed Cloudflared package to the latest version.
+- **[Upgrade Cloudflared](cloudflared/upgrade.yml)**: This playbook upgrades installed Cloudflared package to the latest version.
 
 ### Docker
 
