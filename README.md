@@ -12,6 +12,10 @@ This repository contains a variety of Ansible playbooks that automate different 
 
 - **[APT Packages Upgrade](apt/upgrade.yml)**: This playbook upgrades all installed APT packages to their latest versions.
 
+### Cloudflared
+
+- **[Upgrade Cloudflared](cloudflare/upgrade.yml)**: This playbook upgrades installed Cloudflared package to the latest version.
+
 ### Docker
 
 - **[Docker Cleanup](docker/docker_cleanup.yml)**: This playbook runs `docker system prune -f` to remove unused Docker data including stopped containers, networks, images, and build cache.
