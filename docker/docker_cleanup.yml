@@ -1,0 +1,12 @@
+---
+- name: Clean up unused Docker resources
+  hosts: all
+  become: yes
+  tasks:
+    - name: Run docker system prune
+      shell: docker system prune -f
+      register: prune_result
+
+    - name: Display the result of docker system prune
+      debug:
+        var: prune_result.stdout_lines
