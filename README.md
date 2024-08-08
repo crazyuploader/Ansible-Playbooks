@@ -19,11 +19,12 @@ This repository contains a variety of Ansible playbooks that automate different 
 ### Docker
 
 - **[Docker Cleanup](docker/docker_cleanup.yml)**: This playbook runs `docker system prune -f` to remove unused Docker data including stopped containers, networks, images, and build cache.
+- **[Install Docker & Docker Compose](docker/docker_setup.yml)**: This playbook installs Docker & Docker Compose.
 
-### Setup
+### Ubuntu
 
-- **[Add jungle User & Disable Root Login](setup/jungle.yml)**: This playbook creates a new user named `jungle` and disables root login for enhanced security.
-- **[Ubuntu Jammy With Docker](setup/ubuntu_jammy_with_docker.yml)**: This playbook sets up a new Ubuntu Jammy instance with Docker installed and configured.
+- **[Add jungle User & Disable Root Login](ubuntu/jungle.yml)**: This playbook creates a new user named `jungle` and disables root login for enhanced security.
+- **[Upgrade & Install Essential Packages](setup/basic-system-provision.yml)**: This playbook sets up the server by installing with essential packages.
 
 ## Usage
 
