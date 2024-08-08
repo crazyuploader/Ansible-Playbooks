@@ -24,7 +24,7 @@ This repository contains a variety of Ansible playbooks that automate different 
 ### Ubuntu
 
 - **[Add jungle User & Disable Root Login](ubuntu/jungle.yml)**: This playbook creates a new user named `jungle` and disables root login for enhanced security.
-- **[Upgrade & Install Essential Packages](setup/basic-system-provision.yml)**: This playbook sets up the server by installing with essential packages.
+- **[Upgrade & Install Essential Packages](ubuntu/basic-system-provision.yml)**: This playbook sets up the server by installing with essential packages.
 
 ## Usage
 
