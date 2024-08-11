@@ -17,6 +17,7 @@
         - dnsutils
         - git
         - iftop
+        - iperf3
         - jq
         - mtr-tiny
         - nano
