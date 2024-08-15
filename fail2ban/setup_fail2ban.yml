@@ -1,0 +1,41 @@
+---
+- name: Set up Fail2ban for SSH
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Install Fail2ban
+      package:
+        name: fail2ban
+        state: present
+
+    - name: Create Fail2ban jail.local configuration for SSH
+      copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [sshd]
+          enabled = true
+          port = ssh
+          logpath = %(sshd_log)s
+          maxretry = 3
+          bantime = 10m
+          findtime = 10m
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Ensure Fail2ban is enabled and started
+      systemd:
+        name: fail2ban
+        enabled: yes
+        state: started
+
+    - name: Verify Fail2ban status for SSH
+      shell: fail2ban-client status sshd
+      register: fail2ban_status
+      ignore_errors: yes
+
+    - name: Display Fail2ban status for SSH
+      debug:
+        var: fail2ban_status.stdout_lines
+

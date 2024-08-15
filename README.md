@@ -10,6 +10,7 @@ This repository contains a variety of Ansible playbooks that automate different 
 
 ### Apt
 
+- **[APT Setup Unattended Upgrades](apt/setup-unattended-upgrades.yml)**: This playbook installs `unattended-upgrades` package and configures it automatic updates.
 - **[APT Packages Upgrade](apt/upgrade.yml)**: This playbook upgrades all installed APT packages to their latest versions.
 
 ### Cloudflared
@@ -20,6 +21,10 @@ This repository contains a variety of Ansible playbooks that automate different 
 
 - **[Docker Cleanup](docker/docker_cleanup.yml)**: This playbook runs `docker system prune -f` to remove unused Docker data including stopped containers, networks, images, and build cache.
 - **[Install Docker & Docker Compose](docker/docker_setup.yml)**: This playbook installs Docker & Docker Compose.
+
+### Fail2ban
+
+- **[Setup Fail2ban](fail2ban/setup_fail2ban.yml)**: This playbook installs Fail2ban and configures it for SSH connections.
 
 ### Ubuntu
 
