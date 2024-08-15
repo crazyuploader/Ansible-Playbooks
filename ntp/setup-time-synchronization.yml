@@ -3,7 +3,6 @@
   hosts: all
   become: yes
   tasks:
-
     - name: Install NTP package
       package:
         name: ntp
@@ -22,4 +21,3 @@
     - name: Display NTP status
       debug:
         var: ntp_status.stdout_lines
-

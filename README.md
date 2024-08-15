@@ -6,6 +6,14 @@
 
 This repository contains a variety of Ansible playbooks that automate different system administration tasks. Each playbook is organized by category for easy navigation.
 
+## Usage
+
+To run any of these playbooks, use the following command:
+
+```bash
+ansible-playbook path/to/playbook.yml -i your_inventory_file
+```
+
 ## Playbooks
 
 ### Apt
@@ -34,11 +42,3 @@ This repository contains a variety of Ansible playbooks that automate different 
 
 - **[Add jungle User & Disable Root Login](ubuntu/jungle.yml)**: This playbook creates a new user named `jungle` and disables root login for enhanced security.
 - **[Upgrade & Install Essential Packages](ubuntu/basic_system_provision.yml)**: This playbook sets up the server by installing with essential packages.
-
-## Usage
-
-To run any of these playbooks, use the following command:
-
-```bash
-ansible-playbook path/to/playbook.yml -i your_inventory_file
-```
