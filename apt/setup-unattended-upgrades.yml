@@ -27,7 +27,7 @@
         state: started
 
     - name: Check if automatic updates are configured
-      shell: unattended-upgrade --dry-run
+      shell: unattended-upgrade --dry-run 2>&1
       register: unattended_upgrade_status
 
     - name: Display automatic updates status
