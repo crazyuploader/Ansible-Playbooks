@@ -26,6 +26,10 @@ This repository contains a variety of Ansible playbooks that automate different 
 
 - **[Setup Fail2ban](fail2ban/setup_fail2ban.yml)**: This playbook installs Fail2ban and configures it for SSH connections.
 
+### NTP
+
+- **[NTP - Setup Time Synchronization](ntp/setup-time-synchronization.yml)**: This playbook installs NTP and configures it for time synchronization.
+
 ### Ubuntu
 
 - **[Add jungle User & Disable Root Login](ubuntu/jungle.yml)**: This playbook creates a new user named `jungle` and disables root login for enhanced security.

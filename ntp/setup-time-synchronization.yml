@@ -1,0 +1,25 @@
+---
+- name: Configure NTP for time synchronization
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Install NTP package
+      package:
+        name: ntp
+        state: present
+
+    - name: Ensure NTP is enabled and started
+      systemd:
+        name: ntp
+        enabled: yes
+        state: started
+
+    - name: Verify NTP status
+      shell: ntpq -p
+      register: ntp_status
+
+    - name: Display NTP status
+      debug:
+        var: ntp_status.stdout_lines
+
