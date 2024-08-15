@@ -3,7 +3,6 @@
   hosts: all
   become: yes
   tasks:
-
     - name: Install Fail2ban
       package:
         name: fail2ban
@@ -22,7 +21,7 @@
           findtime = 10m
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
 
     - name: Ensure Fail2ban is enabled and started
       systemd:
@@ -38,4 +37,3 @@
     - name: Display Fail2ban status for SSH
       debug:
         var: fail2ban_status.stdout_lines
-

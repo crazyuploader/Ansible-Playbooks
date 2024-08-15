@@ -3,7 +3,6 @@
   hosts: all
   become: yes
   tasks:
-
     - name: Install unattended-upgrades package
       package:
         name: unattended-upgrades
@@ -19,7 +18,7 @@
           APT::Periodic::Unattended-Upgrade "1";
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
 
     - name: Enable automatic updates
       systemd:
