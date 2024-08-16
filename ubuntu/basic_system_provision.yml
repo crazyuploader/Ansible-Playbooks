@@ -14,6 +14,7 @@
         - apt-transport-https
         - ca-certificates
         - curl
+        - ccze
         - dnsutils
         - git
         - iftop
