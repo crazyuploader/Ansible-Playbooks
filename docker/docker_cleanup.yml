@@ -1,6 +1,6 @@
 ---
 - name: Clean up unused Docker resources
-  hosts: all
+  hosts: Server01, Server02, Server03
   become: yes
   tasks:
     - name: Run docker system prune
