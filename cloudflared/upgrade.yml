@@ -1,6 +1,6 @@
 ---
 - name: Upgrade Cloudflared
-  hosts: Pi, Server01, Server03
+  hosts: Server01, Server03
   become: yes
 
   vars:
