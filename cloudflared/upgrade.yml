@@ -19,6 +19,10 @@
       register: dpkg_architecture
       changed_when: false
 
+    - name: Print Architecture
+      debug:
+        msg: "Detected architecture: {{ dpkg_architecture.stdout }}"
+
     - name: Set Architecture Specific URL
       set_fact:
         deb_url: "{{ deb_urls[dpkg_architecture.stdout] }}"
