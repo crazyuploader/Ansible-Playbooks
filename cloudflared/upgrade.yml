@@ -32,8 +32,10 @@
       apt:
         deb: "/tmp/cloudflared.deb"
         state: present
+      register: cloudflared_upgrade_result
+
     - name: Restart Cloudflared Service
       systemd:
         name: "{{ service_names[inventory_hostname] }}"
         state: restarted
-      when: ansible_facts['previous_task'] is defined and ansible_facts['previous_task']['changed'] == true
+      when: cloudflared_upgrade_result.changed == true
