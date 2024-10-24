@@ -14,6 +14,14 @@
       Server03: "cloudflared.service"
 
   tasks:
+    - name: Get Installed Version
+      shell: cloudflared --version
+      register: cloudflared_version
+
+    - name: Print Installed Version
+      debug:
+        msg: "Installed Cloudflared version: {{ cloudflared_version.stdout }}"
+
     - name: Check Architecture
       command: dpkg --print-architecture
       register: dpkg_architecture
