@@ -23,7 +23,6 @@
         - jq
         - mtr-tiny
         - nano
-        - neofetch
         - net-tools
         - nmap
         - python3
@@ -45,5 +44,6 @@
         - zip
     - name: Install pip packages
       ansible.builtin.pip:
+        break_system_packages: true
         name:
           - jc
