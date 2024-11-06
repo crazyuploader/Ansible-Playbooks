@@ -41,6 +41,7 @@
         - vnstat
         - wget
         - xz-utils
+        - yq
         - zip
     - name: Install pip packages
       ansible.builtin.pip:
