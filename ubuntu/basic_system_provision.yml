@@ -13,6 +13,7 @@
       loop:
         - apt-transport-https
         - btop
+        - bmon
         - ca-certificates
         - curl
         - ccze
@@ -20,9 +21,12 @@
         - git
         - iftop
         - iperf3
+        - iptraf-ng
         - jq
         - mtr-tiny
         - nano
+        - nethogs
+        - nload
         - net-tools
         - nmap
         - python3
