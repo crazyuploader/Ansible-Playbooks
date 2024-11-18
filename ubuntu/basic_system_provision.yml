@@ -25,6 +25,7 @@
         - jq
         - mtr-tiny
         - nano
+        - ncdu
         - nethogs
         - nload
         - net-tools
