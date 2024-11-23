@@ -27,16 +27,22 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 
 ### Docker
 
-- **[Docker Cleanup](docker/docker_cleanup.yml)**: This playbook runs `docker system prune -f` to remove unused Docker data including stopped containers, networks, images, and build cache.
-- **[Install Docker & Docker Compose](docker/docker_setup.yml)**: This playbook installs Docker & Docker Compose.
+- **[Docker Cleanup](docker/cleanup.yml)**: This playbook runs `docker system prune -f` to remove unused Docker data including stopped containers, networks, images, and build cache.
+- **[Install Docker & Docker Compose](docker/install.yml)**: This playbook installs Docker & Docker Compose.
 
 ### Fail2ban
 
-- **[Setup Fail2ban](fail2ban/setup_fail2ban.yml)**: This playbook installs Fail2ban and configures it for SSH connections.
+- **[Setup Fail2ban](fail2ban/install-and-configure.yml)**: This playbook installs Fail2ban and configures it for SSH connections.
 
 ### NTP
 
-- **[NTP - Setup Time Synchronization](ntp/setup-time-synchronization.yml)**: This playbook installs NTP and configures it for time synchronization.
+- **[NTP - Setup Time Synchronization](ntp/install-and-configure.yml)**: This playbook installs NTP and configures it for time synchronization.
+
+### Prometheus
+
+## Node Exporter
+
+- **[Install Node Exporter](prometheus/node_exporter/install.yml)**: This playbook installs Node Exporter and configures it to run as a systemd service.
 
 ### Ubuntu
 
