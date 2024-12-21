@@ -1,6 +1,6 @@
 ---
 - name: Upgrade Cloudflared
-  hosts: Server01, Server03, Server05
+  hosts: Server01, Server03, Server05, Server06
   become: yes
 
   vars:
@@ -9,9 +9,10 @@
       arm64: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb"
 
     service_names:
-      Pi: "cloudflared.service"
-      Server01: "thelasthour.service"
+      Server01: "cloudflared.service"
       Server03: "cloudflared.service"
+      Server05: "cloudflared.service"
+      Server06: "cloudflare.service"
 
   tasks:
     - name: Get Installed Version
