@@ -12,7 +12,7 @@
       Server01: "cloudflared.service"
       Server03: "cloudflared.service"
       Server05: "cloudflared.service"
-      Server06: "cloudflare.service"
+      Server06: "cloudflared.service"
 
   tasks:
     - name: Get Installed Version
