@@ -40,7 +40,7 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 
 ### Prometheus
 
-## Node Exporter
+#### Node Exporter
 
 - **[Install Node Exporter](prometheus/node_exporter/install.yml)**: This playbook installs Node Exporter and configures it to run as a systemd service.
 
