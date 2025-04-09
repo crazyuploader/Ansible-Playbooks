@@ -1,31 +1,33 @@
 - name: Install and configure Node Exporter
   hosts: all
-  become: yes
+  become: true
 
   vars:
-    node_exporter_version: "1.8.1" # Hardcoded version
+    node_exporter_version: "1.9.1" # Hardcoded version
     node_exporter_base_url: "https://github.com/prometheus/node_exporter/releases/download"
 
   tasks:
     # Step 1: Check the system architecture (e.g., amd64, arm64) using dpkg
     - name: Check Architecture
-      command: dpkg --print-architecture
+      ansible.builtin.command: dpkg --print-architecture
       register: dpkg_architecture
       changed_when: false
 
     # Step 2: Print the detected system architecture
     - name: Print Architecture
-      debug:
+      ansible.builtin.debug:
         msg: "Detected architecture: {{ dpkg_architecture.stdout }}"
 
     # Step 3: Set the download URL for Node Exporter based on the architecture
     - name: Set download URL for Node Exporter
-      set_fact:
-        node_exporter_url: "{{ node_exporter_base_url }}/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-{{ dpkg_architecture.stdout }}.tar.gz"
+      ansible.builtin.set_fact:
+        node_exporter_url: >-
+          {{ node_exporter_base_url }}/v{{ node_exporter_version }}/
+          node_exporter-{{ node_exporter_version }}.linux-{{ dpkg_architecture.stdout }}.tar.gz
 
     # Step 4: Print the constructed download URL for Node Exporter
     - name: Print Node Exporter URL
-      debug:
+      ansible.builtin.debug:
         msg: "Download URL for Node Exporter: {{ node_exporter_url }}"
 
     # Step 5: Download the Node Exporter tarball from GitHub
@@ -39,20 +41,20 @@
       ansible.builtin.unarchive:
         src: /tmp/node_exporter-{{ node_exporter_version }}.linux-{{ dpkg_architecture.stdout }}.tar.gz
         dest: /tmp/
-        remote_src: yes
+        remote_src: true
 
     # Step 9: Find the extracted Node Exporter binary in /tmp/
     - name: Find extracted Node Exporter binary
       ansible.builtin.find:
         paths: "/tmp"
         patterns: "node_exporter"
-        recurse: yes
+        recurse: true
         file_type: file
       register: node_exporter_binary
 
     # Step 10: Print the location of the extracted Node Exporter binary
     - name: Print Node Exporter binary found
-      debug:
+      ansible.builtin.debug:
         msg: "Found Node Exporter binary at: {{ node_exporter_binary.files[0].path }}"
 
     # Step 11: Move the Node Exporter binary to /usr/local/bin
@@ -65,7 +67,7 @@
 
     # Step 12: Print a message once the binary is moved
     - name: Print Node Exporter binary move progress
-      debug:
+      ansible.builtin.debug:
         msg: "Moved Node Exporter binary to /usr/local/bin"
 
     # Step 13: Create the Node Exporter systemd service file from a template
@@ -77,24 +79,24 @@
 
     # Step 14: Print a message once the systemd service file is created
     - name: Print systemd service creation progress
-      debug:
+      ansible.builtin.debug:
         msg: "Created Node Exporter systemd service file at /etc/systemd/system/node_exporter.service"
 
     # Step 15: Reload the systemd daemon to apply the new service
     - name: Reload systemd daemon
       ansible.builtin.systemd_service:
-        daemon_reload: yes
+        daemon_reload: true
 
     # Step 16: Enable and start the Node Exporter service
     - name: Enable and start Node Exporter service
       ansible.builtin.systemd_service:
         name: node_exporter
-        enabled: yes
+        enabled: true
         state: started
 
     # Step 17: Print a message once the service is started and enabled
     - name: Print Node Exporter service start progress
-      debug:
+      ansible.builtin.debug:
         msg: "Enabled and started Node Exporter service"
 
     # Step 20: Clean up temporary files and extracted directories

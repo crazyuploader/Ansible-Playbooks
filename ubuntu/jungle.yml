@@ -1,6 +1,7 @@
-- hosts: all
+- name: Configure Jungle User and SSH
+  hosts: all
   become: true
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Add 'jungle' User
       ansible.builtin.user:
@@ -9,12 +10,12 @@
         groups: sudo
 
     - name: Add 'jungle' User to the sudoers
-      copy:
+      ansible.builtin.copy:
         dest: "/etc/sudoers.d/jungle"
         content: "jungle ALL=(ALL) NOPASSWD: ALL"
 
     - name: Add SSH Public Key for 'jungle' User
-      authorized_key:
+      ansible.posix.authorized_key:
         user: jungle
         state: present
         key: https://keys.devjugal.com/ssh
@@ -25,7 +26,7 @@
         regexp: "^PasswordAuthentication"
         line: "PasswordAuthentication no"
         state: present
-        backup: yes
+        backup: true
 
     - name: Disable Root Login
       ansible.builtin.lineinfile:
@@ -33,9 +34,9 @@
         regexp: "^PermitRootLogin"
         line: "PermitRootLogin no"
         state: present
-        backup: yes
+        backup: true
 
     - name: Restart SSH Service
-      service:
+      ansible.builtin.service:
         name: ssh
         state: restarted

@@ -1,18 +1,17 @@
----
 - name: Upgrade all apt packages to latest
   hosts: all
   become: true
 
   tasks:
     - name: Update apt cache
-      apt:
-        update_cache: yes
+      ansible.builtin.apt:
+        update_cache: true
 
     - name: Upgrade all packages
-      apt:
+      ansible.builtin.apt:
         upgrade: dist
       register: apt_upgrade_output
 
-    - name: Print packages to be upgraded
-      debug:
+    - name: Print Upgraded Packages
+      ansible.builtin.debug:
         var: apt_upgrade_output.stdout_lines

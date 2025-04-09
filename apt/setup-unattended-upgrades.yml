@@ -1,15 +1,14 @@
----
 - name: Set up automatic security updates
   hosts: all
-  become: yes
+  become: true
   tasks:
     - name: Install unattended-upgrades package
-      package:
+      ansible.builtin.package:
         name: unattended-upgrades
         state: present
 
     - name: Configure unattended-upgrades
-      copy:
+      ansible.builtin.copy:
         dest: /etc/apt/apt.conf.d/20auto-upgrades
         content: |
           APT::Periodic::Update-Package-Lists "1";
@@ -21,9 +20,9 @@
         mode: "0644"
 
     - name: Enable automatic updates
-      systemd:
+      ansible.builtin.systemd:
         name: unattended-upgrades
-        enabled: yes
+        enabled: true
         state: started
 
     - name: Check if automatic updates are configured
@@ -31,5 +30,5 @@
       register: unattended_upgrade_status
 
     - name: Display automatic updates status
-      debug:
+      ansible.builtin.debug:
         var: unattended_upgrade_status.stdout_lines

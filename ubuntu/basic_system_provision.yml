@@ -1,15 +1,25 @@
-- hosts: all
+- name: Basic System Provisioning
+  hosts: all
   become: true
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Install aptitude using apt
-      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
-    - name: Update all packages to their latest version
-      apt:
+      ansible.builtin.apt:
+        name: aptitude
+        state: present
+        update_cache: true
+        force_apt_get: true
+
+    - name: Ensure all packages are installed
+      ansible.builtin.apt:
         name: "*"
-        state: latest
+        state: present
+
     - name: Install packages
-      apt: "name={{ item }} state=latest update_cache=yes"
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
       loop:
         - apt-transport-https
         - btop
@@ -48,6 +58,7 @@
         - xz-utils
         - yq
         - zip
+
     - name: Install pip packages
       ansible.builtin.pip:
         break_system_packages: true

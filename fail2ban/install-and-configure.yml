@@ -1,15 +1,14 @@
----
 - name: Set up Fail2ban for SSH
   hosts: all
-  become: yes
+  become: true
   tasks:
     - name: Install Fail2ban
-      package:
+      ansible.builtin.package:
         name: fail2ban
         state: present
 
     - name: Create Fail2ban jail.local configuration for SSH
-      copy:
+      ansible.builtin.copy:
         dest: /etc/fail2ban/jail.local
         content: |
           [sshd]
@@ -24,16 +23,16 @@
         mode: "0644"
 
     - name: Ensure Fail2ban is enabled and started
-      systemd:
+      ansible.builtin.systemd:
         name: fail2ban
-        enabled: yes
+        enabled: true
         state: started
 
     - name: Verify Fail2ban status for SSH
-      shell: fail2ban-client status sshd
+      ansible.builtin.shell: fail2ban-client status sshd
       register: fail2ban_status
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Display Fail2ban status for SSH
-      debug:
+      ansible.builtin.debug:
         var: fail2ban_status.stdout_lines
