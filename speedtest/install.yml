@@ -5,7 +5,7 @@
   tasks:
     - name: Fetch Speedtest CLI download URL
       ansible.builtin.uri:
-        url: http://api.devjugal.com/speedtest_latest
+        url: https://api.devjugal.com/speedtest_latest
         return_content: true
       register: speedtest_api_response
 
@@ -38,7 +38,7 @@
       ansible.builtin.copy:
         src: /tmp/speedtest
         dest: /usr/local/bin/speedtest
-        mode: '0755'
+        mode: "0755"
 
     - name: Clean up temporary files
       ansible.builtin.file:
