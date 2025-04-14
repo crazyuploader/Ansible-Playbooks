@@ -1,0 +1,94 @@
+---
+- name: Download and install q binary for the appropriate architecture
+  hosts: all
+  become: true  # Ensure tasks are run with elevated privileges for necessary operations
+  gather_facts: true  # Gather system facts to determine architecture and other details
+
+  vars:
+    version: "0.19.2"
+    tar_urls:
+      x86_64: "https://github.com/natesales/q/releases/download/v{{ version }}/q_{{ version }}_linux_amd64.tar.gz"
+      aarch64: "https://github.com/natesales/q/releases/download/v{{ version }}/q_{{ version }}_linux_arm64.tar.gz"
+
+  tasks:
+    - name: Ensure /usr/local/bin directory exists
+      ansible.builtin.file:
+        path: "/usr/local/bin"
+        state: directory
+      # Ensures the target directory for the binary exists
+
+    - name: Check system architecture
+      ansible.builtin.command:
+        cmd: uname -m
+      register: architecture
+      changed_when: false
+      # Capture system architecture, storing it in a variable
+
+    - name: Print detected architecture
+      ansible.builtin.debug:
+        msg: "Detected architecture: {{ architecture.stdout }}"
+      # Debug message to confirm detected architecture
+
+    - name: Set architecture-specific URL
+      ansible.builtin.set_fact:
+        tar_url: "{{ tar_urls[architecture.stdout] }}"
+      when: architecture.stdout in tar_urls
+      # Set the download URL based on the system's architecture
+
+    - name: Download q binary
+      ansible.builtin.get_url:
+        url: "{{ tar_url }}"
+        dest: "/tmp/q.tar.gz"
+      when: tar_url is defined
+      # Download the appropriate q binary tarball to a temporary location
+
+    - name: Ensure /tmp/q directory exists
+      ansible.builtin.file:
+        path: "/tmp/q"
+        state: directory
+        mode: '0755'
+      # Create a temporary directory for extracting tar files
+
+    - name: Extract q binary
+      ansible.builtin.unarchive:
+        src: "/tmp/q.tar.gz"
+        dest: "/tmp/q/"
+        remote_src: true
+      when: tar_url is defined
+      # Unarchive the tarball to extract the q binary
+
+    - name: Move q binary to /usr/local/bin
+      ansible.builtin.copy:
+        src: "/tmp/q/q"
+        dest: "/usr/local/bin/q"
+        remote_src: true
+        mode: '0755'
+      when: tar_url is defined
+      # Move the binary to /usr/local/bin with proper permissions
+
+    - name: Verify q installation
+      ansible.builtin.command:
+        cmd: q --version
+      register: q_version
+      changed_when: false
+      failed_when: q_version.rc != 0
+      # Verify the installation by checking the binary version
+
+    - name: Print installed q version
+      ansible.builtin.debug:
+        msg: "Installed q version: {{ q_version.stdout }}"
+      when: tar_url is defined and q_version.stdout is defined
+      # Display the installed version of q for confirmation
+
+    - name: Clean up extracted files
+      ansible.builtin.file:
+        path: "/tmp/q"
+        state: absent
+      # Remove temporary extraction directory to clean up
+
+    - name: Clean up downloaded tar file
+      ansible.builtin.file:
+        path: "/tmp/q.tar.gz"
+        state: absent
+      when: tar_url is defined
+      # Remove the downloaded tarball to clean up temporary files
