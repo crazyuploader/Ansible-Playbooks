@@ -1,3 +1,4 @@
+---
 - name: Clean up unused Docker resources
   hosts: Server01, Server03, Server04, Server05, Server06, Server07
   become: true

@@ -1,8 +1,8 @@
 ---
 - name: Download and install q binary for the appropriate architecture
   hosts: all
-  become: true  # Ensure tasks are run with elevated privileges for necessary operations
-  gather_facts: true  # Gather system facts to determine architecture and other details
+  become: true # Ensure tasks are run with elevated privileges for necessary operations
+  gather_facts: true # Gather system facts to determine architecture and other details
 
   vars:
     version: "0.19.2"
@@ -46,7 +46,7 @@
       ansible.builtin.file:
         path: "/tmp/q"
         state: directory
-        mode: '0755'
+        mode: "0755"
       # Create a temporary directory for extracting tar files
 
     - name: Extract q binary
@@ -62,7 +62,7 @@
         src: "/tmp/q/q"
         dest: "/usr/local/bin/q"
         remote_src: true
-        mode: '0755'
+        mode: "0755"
       when: tar_url is defined
       # Move the binary to /usr/local/bin with proper permissions
 

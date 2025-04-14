@@ -1,3 +1,4 @@
+---
 - name: Upgrade Cloudflared
   hosts: Server01, Server03, Server05, Server06
   become: true

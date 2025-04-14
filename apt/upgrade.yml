@@ -1,3 +1,4 @@
+---
 - name: Upgrade all apt packages to latest
   hosts: all
   become: true
