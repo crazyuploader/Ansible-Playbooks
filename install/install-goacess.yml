@@ -1,0 +1,31 @@
+---
+- name: Install GoAccess and Configure Log Processing
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Download GoAccess GPG key
+      ansible.builtin.get_url:
+        url: https://deb.goaccess.io/gnugpg.key
+        dest: /tmp/goaccess.gpg
+        mode: '0644'
+
+    - name: Add GoAccess GPG key to keyring
+      ansible.builtin.command: gpg --dearmor --output /usr/share/keyrings/goaccess.gpg /tmp/goaccess.gpg
+      args:
+        creates: /usr/share/keyrings/goaccess.gpg
+
+    - name: Add GoAccess APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/goaccess.gpg arch={{ ansible_architecture }}] https://deb.goaccess.io/ {{ ansible_lsb.codename }} main"
+        filename: goaccess
+        state: present
+
+    - name: Update APT cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install GoAccess
+      ansible.builtin.apt:
+        name: goaccess
+        state: present
