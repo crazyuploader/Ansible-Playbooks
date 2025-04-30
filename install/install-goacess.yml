@@ -15,15 +15,25 @@
       args:
         creates: /usr/share/keyrings/goaccess.gpg
 
+    - name: Check Architecture
+      ansible.builtin.command: dpkg --print-architecture
+      register: dpkg_architecture
+      changed_when: false
+
+    - name: Print Architecture
+      ansible.builtin.debug:
+        msg: "Detected architecture: {{ dpkg_architecture.stdout }}"
+
+
     - name: Add GoAccess APT repository
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/goaccess.gpg arch={{ ansible_architecture }}] https://deb.goaccess.io/ {{ ansible_lsb.codename }} main"
+        repo: "deb [signed-by=/usr/share/keyrings/goaccess.gpg arch={{ dpkg_architecture.stdout }}] https://deb.goaccess.io/ {{ ansible_lsb.codename }} main"
         filename: goaccess
         state: present
 
     - name: Update APT cache
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
 
     - name: Install GoAccess
       ansible.builtin.apt:
