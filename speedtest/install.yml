@@ -3,45 +3,45 @@
   hosts: all
   become: true
   tasks:
-    - name: Fetch Speedtest CLI download URL
-      ansible.builtin.uri:
-        url: https://api.devjugal.com/speedtest_latest
-        return_content: true
-      register: speedtest_api_response
+      - name: Fetch Speedtest CLI download URL
+        ansible.builtin.uri:
+            url: https://api.devjugal.com/speedtest_latest
+            return_content: true
+        register: speedtest_api_response
 
-    - name: Parse the download URL for the current architecture
-      ansible.builtin.set_fact:
-        speedtest_download_url: >
-          {{
-            (speedtest_api_response.json.links.linux[ansible_architecture]
-            if ansible_architecture in speedtest_api_response.json.links.linux
-            else None)
-          }}
+      - name: Parse the download URL for the current architecture
+        ansible.builtin.set_fact:
+            speedtest_download_url: >
+                {{
+                  (speedtest_api_response.json.links.linux[ansible_architecture]
+                  if ansible_architecture in speedtest_api_response.json.links.linux
+                  else None)
+                }}
 
-    - name: Fail if architecture is not supported
-      ansible.builtin.fail:
-        msg: "Unsupported architecture: {{ ansible_architecture }}"
-      when: speedtest_download_url is not defined
+      - name: Fail if architecture is not supported
+        ansible.builtin.fail:
+            msg: "Unsupported architecture: {{ ansible_architecture }}"
+        when: speedtest_download_url is not defined
 
-    - name: Download the Speedtest CLI tarball
-      ansible.builtin.get_url:
-        url: "{{ speedtest_download_url }}"
-        dest: /tmp/speedtest.tgz
+      - name: Download the Speedtest CLI tarball
+        ansible.builtin.get_url:
+            url: "{{ speedtest_download_url }}"
+            dest: /tmp/speedtest.tgz
 
-    - name: Extract the Speedtest CLI tarball
-      ansible.builtin.unarchive:
-        src: /tmp/speedtest.tgz
-        dest: /tmp/
-        remote_src: true
+      - name: Extract the Speedtest CLI tarball
+        ansible.builtin.unarchive:
+            src: /tmp/speedtest.tgz
+            dest: /tmp/
+            remote_src: true
 
-    - name: Move the Speedtest executable to /usr/local/bin
-      ansible.builtin.copy:
-        src: /tmp/speedtest
-        dest: /usr/local/bin/speedtest
-        mode: "0755"
-        remote_src: yes
+      - name: Move the Speedtest executable to /usr/local/bin
+        ansible.builtin.copy:
+            src: /tmp/speedtest
+            dest: /usr/local/bin/speedtest
+            mode: "0755"
+            remote_src: yes
 
-    - name: Clean up temporary files
-      ansible.builtin.file:
-        path: /tmp/speedtest.tgz
-        state: absent
+      - name: Clean up temporary files
+        ansible.builtin.file:
+            path: /tmp/speedtest.tgz
+            state: absent

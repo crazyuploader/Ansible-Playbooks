@@ -4,64 +4,64 @@
   become: true
   gather_facts: true
   tasks:
-    - name: Install aptitude using apt
-      ansible.builtin.apt:
-        name: aptitude
-        state: present
-        update_cache: true
-        force_apt_get: true
+      - name: Install aptitude using apt
+        ansible.builtin.apt:
+            name: aptitude
+            state: present
+            update_cache: true
+            force_apt_get: true
 
-    - name: Ensure all packages are installed
-      ansible.builtin.apt:
-        name: "*"
-        state: present
+      - name: Ensure all packages are installed
+        ansible.builtin.apt:
+            name: "*"
+            state: present
 
-    - name: Install packages
-      ansible.builtin.apt:
-        name: "{{ item }}"
-        state: present
-        update_cache: true
-      loop:
-        - apt-transport-https
-        - btop
-        - bmon
-        - ca-certificates
-        - curl
-        - ccze
-        - dnsutils
-        - git
-        - iftop
-        - iperf3
-        - iptraf-ng
-        - jq
-        - mtr-tiny
-        - nano
-        - ncdu
-        - nethogs
-        - nload
-        - net-tools
-        - nmap
-        - python3
-        - python3-pip
-        - python3-setuptools
-        - screen
-        - shellcheck
-        - software-properties-common
-        - tar
-        - tmux
-        - traceroute
-        - tree
-        - unzip
-        - vim
-        - virtualenv
-        - vnstat
-        - wget
-        - xz-utils
-        - yq
-        - zip
+      - name: Install packages
+        ansible.builtin.apt:
+            name: "{{ item }}"
+            state: present
+            update_cache: true
+        loop:
+            - apt-transport-https
+            - btop
+            - bmon
+            - ca-certificates
+            - curl
+            - ccze
+            - dnsutils
+            - git
+            - iftop
+            - iperf3
+            - iptraf-ng
+            - jq
+            - mtr-tiny
+            - nano
+            - ncdu
+            - nethogs
+            - nload
+            - net-tools
+            - nmap
+            - python3
+            - python3-pip
+            - python3-setuptools
+            - screen
+            - shellcheck
+            - software-properties-common
+            - tar
+            - tmux
+            - traceroute
+            - tree
+            - unzip
+            - vim
+            - virtualenv
+            - vnstat
+            - wget
+            - xz-utils
+            - yq
+            - zip
 
-    - name: Install pip packages
-      ansible.builtin.pip:
-        break_system_packages: true
-        name:
-          - jc
+      - name: Install pip packages
+        ansible.builtin.pip:
+            break_system_packages: true
+            name:
+                - jc

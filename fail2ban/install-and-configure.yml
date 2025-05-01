@@ -3,37 +3,37 @@
   hosts: all
   become: true
   tasks:
-    - name: Install Fail2ban
-      ansible.builtin.package:
-        name: fail2ban
-        state: present
+      - name: Install Fail2ban
+        ansible.builtin.package:
+            name: fail2ban
+            state: present
 
-    - name: Create Fail2ban jail.local configuration for SSH
-      ansible.builtin.copy:
-        dest: /etc/fail2ban/jail.local
-        content: |
-          [sshd]
-          enabled = true
-          port = ssh
-          logpath = %(sshd_log)s
-          maxretry = 3
-          bantime = 10m
-          findtime = 10m
-        owner: root
-        group: root
-        mode: "0644"
+      - name: Create Fail2ban jail.local configuration for SSH
+        ansible.builtin.copy:
+            dest: /etc/fail2ban/jail.local
+            content: |
+                [sshd]
+                enabled = true
+                port = ssh
+                logpath = %(sshd_log)s
+                maxretry = 3
+                bantime = 10m
+                findtime = 10m
+            owner: root
+            group: root
+            mode: "0644"
 
-    - name: Ensure Fail2ban is enabled and started
-      ansible.builtin.systemd:
-        name: fail2ban
-        enabled: true
-        state: started
+      - name: Ensure Fail2ban is enabled and started
+        ansible.builtin.systemd:
+            name: fail2ban
+            enabled: true
+            state: started
 
-    - name: Verify Fail2ban status for SSH
-      ansible.builtin.shell: fail2ban-client status sshd
-      register: fail2ban_status
-      ignore_errors: true
+      - name: Verify Fail2ban status for SSH
+        ansible.builtin.shell: fail2ban-client status sshd
+        register: fail2ban_status
+        ignore_errors: true
 
-    - name: Display Fail2ban status for SSH
-      ansible.builtin.debug:
-        var: fail2ban_status.stdout_lines
+      - name: Display Fail2ban status for SSH
+        ansible.builtin.debug:
+            var: fail2ban_status.stdout_lines

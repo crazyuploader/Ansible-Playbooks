@@ -3,21 +3,21 @@
   hosts: all
   become: true
   tasks:
-    - name: Install NTP package
-      ansible.builtin.package:
-        name: ntp
-        state: present
+      - name: Install NTP package
+        ansible.builtin.package:
+            name: ntp
+            state: present
 
-    - name: Ensure NTP is enabled and started
-      ansible.builtin.systemd:
-        name: ntp
-        enabled: true
-        state: started
+      - name: Ensure NTP is enabled and started
+        ansible.builtin.systemd:
+            name: ntp
+            enabled: true
+            state: started
 
-    - name: Verify NTP status
-      ansible.builtin.shell: ntpq -p
-      register: ntp_status
+      - name: Verify NTP status
+        ansible.builtin.shell: ntpq -p
+        register: ntp_status
 
-    - name: Display NTP status
-      ansible.builtin.debug:
-        var: ntp_status.stdout_lines
+      - name: Display NTP status
+        ansible.builtin.debug:
+            var: ntp_status.stdout_lines

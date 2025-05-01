@@ -4,38 +4,37 @@
   become: true
 
   tasks:
-    - name: Download GoAccess GPG key
-      ansible.builtin.get_url:
-        url: https://deb.goaccess.io/gnugpg.key
-        dest: /tmp/goaccess.gpg
-        mode: '0644'
+      - name: Download GoAccess GPG key
+        ansible.builtin.get_url:
+            url: https://deb.goaccess.io/gnugpg.key
+            dest: /tmp/goaccess.gpg
+            mode: "0644"
 
-    - name: Add GoAccess GPG key to keyring
-      ansible.builtin.command: gpg --dearmor --output /usr/share/keyrings/goaccess.gpg /tmp/goaccess.gpg
-      args:
-        creates: /usr/share/keyrings/goaccess.gpg
+      - name: Add GoAccess GPG key to keyring
+        ansible.builtin.command: gpg --dearmor --output /usr/share/keyrings/goaccess.gpg /tmp/goaccess.gpg
+        args:
+            creates: /usr/share/keyrings/goaccess.gpg
 
-    - name: Check Architecture
-      ansible.builtin.command: dpkg --print-architecture
-      register: dpkg_architecture
-      changed_when: false
+      - name: Check Architecture
+        ansible.builtin.command: dpkg --print-architecture
+        register: dpkg_architecture
+        changed_when: false
 
-    - name: Print Architecture
-      ansible.builtin.debug:
-        msg: "Detected architecture: {{ dpkg_architecture.stdout }}"
+      - name: Print Architecture
+        ansible.builtin.debug:
+            msg: "Detected architecture: {{ dpkg_architecture.stdout }}"
 
+      - name: Add GoAccess APT repository
+        ansible.builtin.apt_repository:
+            repo: "deb [signed-by=/usr/share/keyrings/goaccess.gpg arch={{ dpkg_architecture.stdout }}] https://deb.goaccess.io/ {{ ansible_lsb.codename }} main"
+            filename: goaccess
+            state: present
 
-    - name: Add GoAccess APT repository
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/goaccess.gpg arch={{ dpkg_architecture.stdout }}] https://deb.goaccess.io/ {{ ansible_lsb.codename }} main"
-        filename: goaccess
-        state: present
+      - name: Update APT cache
+        ansible.builtin.apt:
+            update_cache: true
 
-    - name: Update APT cache
-      ansible.builtin.apt:
-        update_cache: true
-
-    - name: Install GoAccess
-      ansible.builtin.apt:
-        name: goaccess
-        state: present
+      - name: Install GoAccess
+        ansible.builtin.apt:
+            name: goaccess
+            state: present

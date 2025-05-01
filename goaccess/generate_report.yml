@@ -3,6 +3,6 @@
   hosts: all
   become: true
   tasks:
-    - name: Generate combined GoAccess report from all subdomain logs
-      shell: |
-        goaccess /var/log/caddy/*/access.json -o /usr/share/caddy/report.html --log-format=CADDY
+      - name: Generate combined GoAccess report from all subdomain logs
+        shell: |
+            goaccess /var/log/caddy/*/access.json -o /usr/share/caddy/report.html --log-format=CADDY

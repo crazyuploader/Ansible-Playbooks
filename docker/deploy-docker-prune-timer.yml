@@ -3,45 +3,45 @@
   hosts: all
   become: true
   tasks:
-    - name: Ensure Docker prune service unit file is present
-      ansible.builtin.copy:
-        dest: /etc/systemd/system/docker-prune.service
-        mode: "0644"
-        content: |
-          [Unit]
-          Description=Prune unused Docker objects
+      - name: Ensure Docker prune service unit file is present
+        ansible.builtin.copy:
+            dest: /etc/systemd/system/docker-prune.service
+            mode: "0644"
+            content: |
+                [Unit]
+                Description=Prune unused Docker objects
 
-          [Service]
-          Type=oneshot
-          ExecStart=/usr/bin/docker system prune --all --force
+                [Service]
+                Type=oneshot
+                ExecStart=/usr/bin/docker system prune --all --force
 
-      notify: Reload systemd
+        notify: Reload systemd
 
-    - name: Ensure Docker prune timer unit file is present
-      ansible.builtin.copy:
-        dest: /etc/systemd/system/docker-prune.timer
-        mode: "0644"
-        content: |
-          [Unit]
-          Description=Weekly Docker system prune
+      - name: Ensure Docker prune timer unit file is present
+        ansible.builtin.copy:
+            dest: /etc/systemd/system/docker-prune.timer
+            mode: "0644"
+            content: |
+                [Unit]
+                Description=Weekly Docker system prune
 
-          [Timer]
-          OnCalendar=weekly
-          Persistent=true
+                [Timer]
+                OnCalendar=weekly
+                Persistent=true
 
-          [Install]
-          WantedBy=timers.target
+                [Install]
+                WantedBy=timers.target
 
-      notify: Reload systemd
+        notify: Reload systemd
 
-    - name: Enable and start the Docker prune timer
-      ansible.builtin.systemd:
-        name: docker-prune.timer
-        enabled: true
-        state: started
+      - name: Enable and start the Docker prune timer
+        ansible.builtin.systemd:
+            name: docker-prune.timer
+            enabled: true
+            state: started
 
   handlers:
-    - name: Reload systemd
-      ansible.builtin.systemd:
-        daemon_reload: true
-      become: true
+      - name: Reload systemd
+        ansible.builtin.systemd:
+            daemon_reload: true
+        become: true
