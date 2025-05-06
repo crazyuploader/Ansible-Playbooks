@@ -1,4 +1,4 @@
-# Ansible-Playbooks
+\_\_# Ansible-Playbooks
 
 > A collection of Ansible Playbooks created and used during my learning journey with Ansible.
 
@@ -45,7 +45,21 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Setup Fail2ban](fail2ban/install-and-configure.yml)**:
   This playbook installs Fail2ban and configures it to protect your server from brute-force attacks, particularly on SSH connections.
 
+### GoAccess
+
+- **[Generate Report](goaccess/generate_report.yml)**:
+  This playbook generates GoAccess report for Caddy Server.
+
 ### Install
+
+- **[Install Caddy Server](install/install-caddy-server.yml)**:
+  This playbook install Caddy Server.
+
+- **[Install GoAccess](install/install-goacess.yml)**:
+  This playbook install GoAccess.
+
+- **[Install Nginx](install/install-nginx.yml)**:
+  This playbook install Nginx Web Server.
 
 - **[Install q](install/install-q.yml)**:
   This playbook installs `q`, a powerful command-line DNS client, facilitating better DNS querying.
@@ -81,3 +95,5 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 ## Notes
 
 Ensure you review each playbook and update any necessary variables according to your environment specifics before running them. This will help in avoiding unintended changes to your systems.
+\_
+\_
