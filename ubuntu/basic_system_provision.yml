@@ -33,6 +33,7 @@
             - iftop
             - iperf3
             - iptraf-ng
+            - htop
             - jq
             - mtr-tiny
             - nano
