@@ -1,4 +1,4 @@
-\_\_# Ansible-Playbooks
+# Ansible-Playbooks
 
 > A collection of Ansible Playbooks created and used during my learning journey with Ansible.
 
