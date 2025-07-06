@@ -1,4 +1,4 @@
-\_\_# Ansible-Playbooks
+# Ansible-Playbooks
 
 > A collection of Ansible Playbooks created and used during my learning journey with Ansible.
 
@@ -95,5 +95,3 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 ## Notes
 
 Ensure you review each playbook and update any necessary variables according to your environment specifics before running them. This will help in avoiding unintended changes to your systems.
-\_
-\_
