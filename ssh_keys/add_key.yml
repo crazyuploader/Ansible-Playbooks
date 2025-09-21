@@ -1,0 +1,31 @@
+---
+- name: Add SSH keys to remote servers
+  hosts: all
+  vars:
+      use_github: true # set to false if you want to use manual key
+      github_user: "your_github_username"
+  vars_files:
+      - vars/ssh_keys.yml # external variable
+
+  tasks:
+      - name: Fetch SSH keys from GitHub
+        ansible.builtin.uri:
+            url: "https://github.com/{{ github_user }}.keys"
+            return_content: true
+        register: github_keys
+        when: use_github
+
+      - name: Add GitHub keys to authorized_keys
+        ansible.posix.authorized_key:
+            user: "{{ ansible_user }}"
+            state: present
+            key: "{{ item }}"
+        loop: "{{ github_keys.content.splitlines() }}"
+        when: use_github
+
+      - name: Add manual SSH key to authorized_keys
+        ansible.posix.authorized_key:
+            user: "{{ ansible_user }}"
+            state: present
+            key: "{{ my_ssh_key }}"
+        when: not use_github

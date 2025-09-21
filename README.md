@@ -84,6 +84,11 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install Speedtest](speedtest/install.yml)**:
   This playbook installs the official CLI from Speedtest.net, allowing you to easily test and measure your internet connection performance.
 
+### SSH Keys
+
+- **[SSH Keys](ssh_keys/add_key.yml)**:
+  This playbook adds desired SSH Keys either from GitHub or manually from [ssh_keys/vars/keys.yml](ssh_keys/vars/keys.yml).
+
 ### Ubuntu
 
 - **[Add jungle User & Disable Root Login](ubuntu/jungle.yml)**:
