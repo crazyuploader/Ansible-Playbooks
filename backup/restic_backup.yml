@@ -4,7 +4,7 @@
   become: true
 
   vars_files:
-      - vars/example_vars.yml # replace with your private vars file
+      - "{{ vars_file | default('vars/config.yml') }}"
 
   tasks:
       - name: Check if restic is installed
@@ -57,12 +57,11 @@
             backup {{ backup_paths | join(' ') }}
             {% if restic_tags is defined and restic_tags | length > 0 %}--tag "{{ restic_tags }}"{% endif %}
             --host "{{ inventory_hostname }}"
-            --verbose
+            --verbose {% if dry_run %} --dry-run {% endif %}
         environment: "{{ restic_env }}"
         register: restic_backup
         changed_when: false
 
       - name: Show restic backup output
         ansible.builtin.debug:
-            msg: |
-                {{ restic_backup.stdout | trim }}
+            msg: "{{ restic_backup.stdout }}"

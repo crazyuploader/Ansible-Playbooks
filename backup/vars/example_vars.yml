@@ -1,6 +1,9 @@
 # Generic example vars file for restic_backup.yml
 # Copy this to vars.yml and update with your actual values
 
+# Enable dry-run mode (set to true for testing, false for actual backups)
+dry_run: true
+
 backup_paths:
     - /path/to/configs
     - /path/to/data
