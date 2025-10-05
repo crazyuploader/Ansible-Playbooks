@@ -5,7 +5,7 @@
       use_github: true # set to false if you want to use manual key
       github_user: "your_github_username"
   vars_files:
-      - vars/ssh_keys.yml # external variable
+      - vars/keys.yml # external variable
 
   tasks:
       - name: Fetch SSH keys from GitHub
