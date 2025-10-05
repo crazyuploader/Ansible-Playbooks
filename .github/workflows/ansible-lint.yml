@@ -1,0 +1,31 @@
+name: Ansible Playbook Lint
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+
+jobs:
+    lint-and-syntax-check:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13x"
+
+            - name: Install Ansible and Ansible Lint
+              run: |
+                  pip install ansible ansible-lint
+
+            - name: Run Ansible Lint
+              run: |
+                  ansible-lint .
+
+            - name: Run Ansible Playbook Syntax Check
+              run: |
+                  find . -name "*.yml" -print0 | xargs -0 -I {} ansible-playbook --syntax-check {}
