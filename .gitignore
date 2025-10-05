@@ -1,1 +1,3 @@
 .ansible
+backup/vars/*.yml
+!backup/vars/example_vars.yml

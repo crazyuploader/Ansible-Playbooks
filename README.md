@@ -52,6 +52,11 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Generate Report](goaccess/generate_report.yml)**:
   This playbook generates GoAccess report for Caddy Server.
 
+### Backup
+
+- **[Restic Backup](backup/restic_backup.yml)**:
+  This playbook performs a Restic backup, initializing the repository if needed, and then executing the backup with specified paths and tags.
+
 ### Install
 
 - **[Install Caddy Server](install/install-caddy-server.yml)**:

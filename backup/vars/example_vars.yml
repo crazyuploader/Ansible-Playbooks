@@ -1,0 +1,22 @@
+# Generic example vars file for restic_backup.yml
+# Copy this to vars.yml and update with your actual values
+
+backup_paths:
+    - /path/to/configs
+    - /path/to/data
+    - /path/to/other
+
+restic_tags: "backup-type,timestamp"
+
+# Restic repository and optional rclone remote path (customize for your backend)
+restic_repo: "rclone:{remote_name}:{bucket_name}/{{ inventory_hostname | lower }}"
+rclone_remote_path: "{remote_name}:{bucket_name}/{{ inventory_hostname | lower }}"
+
+# Environment variables for restic and rclone configuration
+restic_env:
+    RESTIC_PASSWORD: "your-restic-password"
+    RCLONE_CONFIG_{REMOTE_NAME}_TYPE: "s3" # or other supported type
+    RCLONE_CONFIG_{REMOTE_NAME}_PROVIDER: "Other" # or AWS, GCP, etc.
+    RCLONE_CONFIG_{REMOTE_NAME}_ACCESS_KEY_ID: "your-access-key"
+    RCLONE_CONFIG_{REMOTE_NAME}_SECRET_ACCESS_KEY: "your-secret-key"
+    RCLONE_CONFIG_{REMOTE_NAME}_ENDPOINT: "https://s3.endpoint.example"

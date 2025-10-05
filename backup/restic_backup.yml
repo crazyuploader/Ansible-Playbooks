@@ -1,0 +1,68 @@
+---
+- name: Restic Backup Playbook
+  hosts: all
+  become: true
+
+  vars_files:
+      - vars/example_vars.yml # replace with your private vars file
+
+  tasks:
+      - name: Check if restic is installed
+        ansible.builtin.command: which restic
+        register: restic_check
+        ignore_errors: true
+
+      - name: Check if rclone is installed
+        ansible.builtin.command: which rclone
+        register: rclone_check
+        ignore_errors: true
+
+      - name: Fail if restic is not installed
+        ansible.builtin.fail:
+            msg: "Restic is not installed on {{ inventory_hostname }}"
+        when: restic_check.rc != 0
+
+      - name: Fail if rclone is not installed
+        ansible.builtin.fail:
+            msg: "Rclone is not installed on {{ inventory_hostname }}"
+        when: rclone_check.rc != 0
+
+      - name: Update rclone
+        ansible.builtin.command: rclone self-update
+        environment: "{{ restic_env }}"
+        ignore_errors: true
+
+      - name: Update restic
+        ansible.builtin.command: restic self-update
+        environment: "{{ restic_env }}"
+        ignore_errors: true
+
+      - name: Check if restic repository exists
+        ansible.builtin.shell: |
+            rclone lsd "{{ rclone_remote_path }}" || true
+        register: repo_check
+        environment: "{{ restic_env }}"
+        changed_when: false
+
+      - name: Initialize restic repository if missing
+        ansible.builtin.command: >
+            restic -r "{{ restic_repo }}" init
+        environment: "{{ restic_env }}"
+        when: repo_check.stdout == ""
+        changed_when: false
+
+      - name: Run restic backup
+        ansible.builtin.command: >
+            restic -r "{{ restic_repo }}"
+            backup {{ backup_paths | join(' ') }}
+            {% if restic_tags is defined and restic_tags | length > 0 %}--tag "{{ restic_tags }}"{% endif %}
+            --host "{{ inventory_hostname }}"
+            --verbose
+        environment: "{{ restic_env }}"
+        register: restic_backup
+        changed_when: false
+
+      - name: Show restic backup output
+        ansible.builtin.debug:
+            msg: |
+                {{ restic_backup.stdout | trim }}
