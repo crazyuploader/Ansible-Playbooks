@@ -24,8 +24,8 @@ jobs:
 
             - name: Run Ansible Lint
               run: |
-                  ansible-lint .
+                  ansible-lint --exclude .github .
 
             - name: Run Ansible Playbook Syntax Check
               run: |
-                  find . -name "*.yml" -print0 | xargs -0 -I {} ansible-playbook --syntax-check {}
+                  find . -name "*.yml" -not -path "./.github/workflows/*" -not -path "**/vars/*.yml" -print0 | xargs -0 -I {} ansible-playbook --syntax-check {}
