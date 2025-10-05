@@ -1,25 +1,41 @@
-# Generic example vars file for restic_backup.yml
-# Copy this to vars.yml and update with your actual values
-
-# Enable dry-run mode (set to true for testing, false for actual backups)
-dry_run: true
-
+# Directories to back up
 backup_paths:
-    - /path/to/configs
-    - /path/to/data
-    - /path/to/other
+    - /etc
+    - /home
+    - /opt
 
-restic_tags: "backup-type,timestamp"
+# Restic backup tags
+restic_tags: "daily,critical"
 
-# Restic repository and optional rclone remote path (customize for your backend)
-restic_repo: "rclone:{remote_name}:{bucket_name}/{{ inventory_hostname | lower }}"
-rclone_remote_path: "{remote_name}:{bucket_name}/{{ inventory_hostname | lower }}"
+# Enable dry-run mode (true or false)
+dry_run: false
 
-# Environment variables for restic and rclone configuration
-restic_env:
-    RESTIC_PASSWORD: "your-restic-password"
-    RCLONE_CONFIG_{REMOTE_NAME}_TYPE: "s3" # or other supported type
-    RCLONE_CONFIG_{REMOTE_NAME}_PROVIDER: "Other" # or AWS, GCP, etc.
-    RCLONE_CONFIG_{REMOTE_NAME}_ACCESS_KEY_ID: "your-access-key"
-    RCLONE_CONFIG_{REMOTE_NAME}_SECRET_ACCESS_KEY: "your-secret-key"
-    RCLONE_CONFIG_{REMOTE_NAME}_ENDPOINT: "https://s3.endpoint.example"
+# Global Restic environment (shared for all remotes)
+global_restic_env:
+    RESTIC_PASSWORD: "change-me"
+
+# Multiple rclone remotes
+rclone_remotes:
+    - name: telnyx
+      env:
+          RCLONE_CONFIG_TELNYX_TYPE: "s3"
+          RCLONE_CONFIG_TELNYX_PROVIDER: "Other"
+          RCLONE_CONFIG_TELNYX_ACCESS_KEY_ID: "telnyx-access-key"
+          RCLONE_CONFIG_TELNYX_SECRET_ACCESS_KEY: "telnyx-secret-key"
+          RCLONE_CONFIG_TELNYX_ENDPOINT: "https://s3.telnyx.example"
+
+    - name: scaleway
+      env:
+          RCLONE_CONFIG_SCALEWAY_TYPE: "s3"
+          RCLONE_CONFIG_SCALEWAY_PROVIDER: "Scaleway"
+          RCLONE_CONFIG_SCALEWAY_ACCESS_KEY_ID: "scaleway-access-key"
+          RCLONE_CONFIG_SCALEWAY_SECRET_ACCESS_KEY: "scaleway-secret-key"
+          RCLONE_CONFIG_SCALEWAY_ENDPOINT: "https://s3.fr-par.scw.cloud"
+
+    - name: storj
+      env:
+          RCLONE_CONFIG_STORJ_TYPE: "s3"
+          RCLONE_CONFIG_STORJ_PROVIDER: "Other"
+          RCLONE_CONFIG_STORJ_ACCESS_KEY_ID: "storj-access-key"
+          RCLONE_CONFIG_STORJ_SECRET_ACCESS_KEY: "storj-secret-key"
+          RCLONE_CONFIG_STORJ_ENDPOINT: "https://gateway.storjshare.io"

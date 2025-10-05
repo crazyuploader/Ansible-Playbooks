@@ -29,39 +29,46 @@
 
       - name: Update rclone
         ansible.builtin.command: rclone self-update
-        environment: "{{ restic_env }}"
+        environment: "{{ global_restic_env }}"
         ignore_errors: true
 
       - name: Update restic
         ansible.builtin.command: restic self-update
-        environment: "{{ restic_env }}"
+        environment: "{{ global_restic_env }}"
         ignore_errors: true
 
-      - name: Check if restic repository exists
-        ansible.builtin.shell: |
-            rclone lsd "{{ rclone_remote_path }}" || true
-        register: repo_check
-        environment: "{{ restic_env }}"
-        changed_when: false
+      - name: Iterate over each rclone remote and perform backup
+        loop: "{{ rclone_remotes }}"
+        loop_control:
+            loop_var: remote
+        vars:
+            repo: "rclone:{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
+            rclone_path: "{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
+        block:
+            - name: Check if restic repository exists for {{ remote.name }}
+              ansible.builtin.shell: |
+                  rclone lsd "{{ rclone_path }}" || true
+              register: repo_check
+              environment: "{{ remote.env | combine(global_restic_env) }}"
+              changed_when: false
 
-      - name: Initialize restic repository if missing
-        ansible.builtin.command: >
-            restic -r "{{ restic_repo }}" init
-        environment: "{{ restic_env }}"
-        when: repo_check.stdout == ""
-        changed_when: false
+            - name: Initialize restic repository if missing ({{ remote.name }})
+              ansible.builtin.command: >
+                  restic -r "{{ repo }}" init
+              environment: "{{ remote.env | combine(global_restic_env) }}"
+              when: repo_check.stdout == ""
 
-      - name: Run restic backup
-        ansible.builtin.command: >
-            restic -r "{{ restic_repo }}"
-            backup {{ backup_paths | join(' ') }}
-            {% if restic_tags is defined and restic_tags | length > 0 %}--tag "{{ restic_tags }}"{% endif %}
-            --host "{{ inventory_hostname }}"
-            --verbose {% if dry_run %} --dry-run {% endif %}
-        environment: "{{ restic_env }}"
-        register: restic_backup
-        changed_when: false
+            - name: Run restic backup to {{ remote.name }}
+              ansible.builtin.command: >
+                  restic -r "{{ repo }}"
+                  backup {{ backup_paths | join(' ') }}
+                  {% if restic_tags is defined and restic_tags | length > 0 %}--tag "{{ restic_tags }}"{% endif %}
+                  --host "{{ inventory_hostname }}"
+                  {% if dry_run | default(false) %}--dry-run{% endif %}
+                  --verbose
+              environment: "{{ remote.env | combine(global_restic_env) }}"
+              register: restic_backup
 
-      - name: Show restic backup output
-        ansible.builtin.debug:
-            msg: "{{ restic_backup.stdout }}"
+            - name: Show restic backup output ({{ remote.name }})
+              ansible.builtin.debug:
+                  var: restic_backup.stdout
