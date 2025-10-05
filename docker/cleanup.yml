@@ -4,8 +4,9 @@
   become: true
   tasks:
       - name: Run docker system prune
-        ansible.builtin.shell: docker system prune --all --force --volumes
+        ansible.builtin.command: docker system prune --all --force --volumes
         register: prune_result
+        changed_when: prune_result.stdout != ''
 
       - name: Display the result of docker system prune
         ansible.builtin.debug:

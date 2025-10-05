@@ -13,17 +13,22 @@
             state: present
             update_cache: true
 
-      - name: Download and add Caddy GPG key
-        ansible.builtin.shell: |
-            curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+      - name: Download Caddy GPG key
+        ansible.builtin.get_url:
+            url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+            dest: /tmp/caddy-stable-archive-keyring.gpg
+            mode: "0644"
+
+      - name: Add Caddy GPG key
+        ansible.builtin.command: gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg /tmp/caddy-stable-archive-keyring.gpg
         args:
             creates: /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 
       - name: Add Caddy apt repository
-        ansible.builtin.shell: |
-            curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
-        args:
-            creates: /etc/apt/sources.list.d/caddy-stable.list
+        ansible.builtin.get_url:
+            url: https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt
+            dest: /etc/apt/sources.list.d/caddy-stable.list
+            mode: "0644"
 
       - name: Update apt cache
         ansible.builtin.apt:

@@ -32,9 +32,14 @@
             update_cache: true
         when: ansible_facts['os_family'] == "Debian" and ansible_facts['distribution'] == "Ubuntu"
 
+      - name: Download nginx signing key
+        ansible.builtin.get_url:
+            url: https://nginx.org/keys/nginx_signing.key
+            dest: /tmp/nginx_signing.key
+            mode: "0644"
+
       - name: Import nginx signing key
-        ansible.builtin.shell: |
-            curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor > /usr/share/keyrings/nginx-archive-keyring.gpg
+        ansible.builtin.command: gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg /tmp/nginx_signing.key
         args:
             creates: /usr/share/keyrings/nginx-archive-keyring.gpg
 
@@ -60,6 +65,7 @@
                 Pin: origin nginx.org
                 Pin: release o=nginx
                 Pin-Priority: 900
+            mode: "0644"
 
       - name: Update apt cache after adding nginx repo
         ansible.builtin.apt:

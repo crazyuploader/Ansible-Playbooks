@@ -27,7 +27,8 @@
             state: started
 
       - name: Check if automatic updates are configured
-        shell: unattended-upgrade --dry-run 2>&1
+        ansible.builtin.shell: unattended-upgrade --dry-run 2>&1
+        changed_when: false
         register: unattended_upgrade_status
 
       - name: Display automatic updates status

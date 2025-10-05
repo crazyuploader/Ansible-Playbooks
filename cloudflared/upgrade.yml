@@ -43,15 +43,17 @@
         ansible.builtin.get_url:
             url: "{{ deb_url }}"
             dest: "/tmp/cloudflared.deb"
+            mode: "0644"
 
       - name: Upgrade Cloudflared
         ansible.builtin.apt:
             deb: "/tmp/cloudflared.deb"
             state: present
         register: cloudflared_upgrade_result
+        notify: Restart Cloudflared Service
 
+  handlers:
       - name: Restart Cloudflared Service
         ansible.builtin.systemd:
             name: "{{ service_names[inventory_hostname] }}"
             state: restarted
-        when: cloudflared_upgrade_result.changed

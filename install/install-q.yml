@@ -15,6 +15,7 @@
         ansible.builtin.file:
             path: "/usr/local/bin"
             state: directory
+            mode: "0755"
         # Ensures the target directory for the binary exists
 
       - name: Check system architecture
@@ -39,6 +40,7 @@
         ansible.builtin.get_url:
             url: "{{ tar_url }}"
             dest: "/tmp/q.tar.gz"
+            mode: "0644"
         when: tar_url is defined
         # Download the appropriate q binary tarball to a temporary location
 

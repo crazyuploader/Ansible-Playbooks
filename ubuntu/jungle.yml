@@ -14,6 +14,7 @@
         ansible.builtin.copy:
             dest: "/etc/sudoers.d/jungle"
             content: "jungle ALL=(ALL) NOPASSWD: ALL"
+            mode: "0440"
 
       - name: Add SSH Public Key for 'jungle' User
         ansible.posix.authorized_key:

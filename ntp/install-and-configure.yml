@@ -15,8 +15,9 @@
             state: started
 
       - name: Verify NTP status
-        ansible.builtin.shell: ntpq -p
+        ansible.builtin.command: ntpq -p
         register: ntp_status
+        changed_when: false
 
       - name: Display NTP status
         ansible.builtin.debug:

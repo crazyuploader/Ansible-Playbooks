@@ -30,9 +30,10 @@
             state: started
 
       - name: Verify Fail2ban status for SSH
-        ansible.builtin.shell: fail2ban-client status sshd
+        ansible.builtin.command: fail2ban-client status sshd
         register: fail2ban_status
         ignore_errors: true
+        changed_when: false
 
       - name: Display Fail2ban status for SSH
         ansible.builtin.debug:

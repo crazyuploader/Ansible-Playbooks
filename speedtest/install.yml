@@ -27,6 +27,7 @@
         ansible.builtin.get_url:
             url: "{{ speedtest_download_url }}"
             dest: /tmp/speedtest.tgz
+            mode: "0644"
 
       - name: Extract the Speedtest CLI tarball
         ansible.builtin.unarchive:
@@ -39,7 +40,7 @@
             src: /tmp/speedtest
             dest: /usr/local/bin/speedtest
             mode: "0755"
-            remote_src: yes
+            remote_src: true
 
       - name: Clean up temporary files
         ansible.builtin.file:

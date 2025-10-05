@@ -26,7 +26,10 @@
 
       - name: Add GoAccess APT repository
         ansible.builtin.apt_repository:
-            repo: "deb [signed-by=/usr/share/keyrings/goaccess.gpg arch={{ dpkg_architecture.stdout }}] https://deb.goaccess.io/ {{ ansible_lsb.codename }} main"
+            repo: >-
+                deb [signed-by=/usr/share/keyrings/goaccess.gpg
+                arch={{ dpkg_architecture.stdout }}]
+                https://deb.goaccess.io/ {{ ansible_lsb.codename }} main
             filename: goaccess
             state: present
 
