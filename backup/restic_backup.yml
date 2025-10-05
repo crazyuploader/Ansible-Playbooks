@@ -11,11 +11,13 @@
         ansible.builtin.command: which restic
         register: restic_check
         ignore_errors: true
+        changed_when: false
 
       - name: Check if rclone is installed
         ansible.builtin.command: which rclone
         register: rclone_check
         ignore_errors: true
+        changed_when: false
 
       - name: Fail if restic is not installed
         ansible.builtin.fail:
@@ -30,15 +32,19 @@
       - name: Update rclone
         ansible.builtin.command: rclone self-update
         environment: "{{ global_restic_env }}"
-        ignore_errors: true
+        register: rclone_update_result
+        changed_when: "'already up to date' not in rclone_update_result.stderr and 'already up to date' not in rclone_update_result.stdout"
+        failed_when: "'ERROR' in rclone_update_result.stderr or 'ERROR' in rclone_update_result.stdout"
 
       - name: Update restic
         ansible.builtin.command: restic self-update
         environment: "{{ global_restic_env }}"
-        ignore_errors: true
+        register: restic_update_result
+        changed_when: "'already up to date' not in restic_update_result.stderr and 'already up to date' not in restic_update_result.stdout"
+        failed_when: "'ERROR' in restic_update_result.stderr or 'ERROR' in restic_update_result.stdout"
 
       - name: Iterate over each rclone remote and perform backup
-        include_tasks: tasks/restic_backup_per_remote.yml
+        ansible.builtin.include_tasks: tasks/restic_backup_per_remote.yml
         loop: "{{ rclone_remotes }}"
         loop_control:
             loop_var: remote
