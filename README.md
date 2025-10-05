@@ -1,5 +1,7 @@
 # Ansible-Playbooks
 
+[![Ansible Playbook Lint](https://github.com/crazyuploader/Ansible-Playbooks/actions/workflows/ansible-lint.yml/badge.svg)](https://github.com/crazyuploader/Ansible-Playbooks/actions/workflows/ansible-lint.yml)
+
 > A collection of Ansible Playbooks created and used during my learning journey with Ansible.
 
 ## Overview
