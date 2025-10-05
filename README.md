@@ -64,6 +64,12 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install q](install/install-q.yml)**:
   This playbook installs `q`, a powerful command-line DNS client, facilitating better DNS querying.
 
+- **[Install Rclone](install/install-rclone.yml)**:
+  This playbook installs Rclone, a command-line program to manage files on cloud storage.
+
+- **[Install Restic](install/install-restic.yml)**:
+  This playbook installs Restic, a program that allows you to backup your files.
+
 ### NTP
 
 - **[NTP - Setup Time Synchronization](ntp/install-and-configure.yml)**:
