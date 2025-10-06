@@ -25,7 +25,7 @@ jobs:
 
             - name: Run Ansible Lint
               run: |
-                  ansible-lint --exclude .github .
+                  ansible-lint --exclude .github
 
             - name: Run Ansible Playbook Syntax Check
               run: |

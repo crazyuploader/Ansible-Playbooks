@@ -13,6 +13,18 @@ backup_paths:
 # Restic backup tags
 restic_tags: "daily,critical"
 
+# Restic forget/prune options (for use with restic_forget.yml)
+# Uncomment and adjust as needed
+# restic_forget:
+#   keep_last: 7
+#   keep_daily: 7
+#   keep_weekly: 4
+#   keep_monthly: 6
+#   keep_within_daily: 7d
+#   keep_within_weekly: 1m
+#   keep_within_monthly: 1y
+#   prune: true
+
 # Enable dry-run mode (true or false)
 dry_run: false
 
