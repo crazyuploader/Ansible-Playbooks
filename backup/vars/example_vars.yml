@@ -4,6 +4,12 @@ backup_paths:
     - /home
     - /opt
 
+# Patterns to ignore during backup (optional)
+# restic_ignore_patterns:
+#   - "*.tmp"
+#   - "/var/cache"
+#   - "*.log"
+
 # Restic backup tags
 restic_tags: "daily,critical"
 

@@ -15,6 +15,11 @@
   ansible.builtin.command: >
       restic -r "{{ repo }}"
       backup {{ backup_paths | join(' ') }}
+      {% if restic_ignore_patterns is defined %}
+      {% for pattern in restic_ignore_patterns %}
+      --exclude '{{ pattern }}'
+      {% endfor %}
+      {% endif %}
       {% if restic_tags is defined and restic_tags | length > 0 %}--tag "{{ restic_tags }}"{% endif %}
       --host "{{ inventory_hostname }}"
       {% if dry_run | default(false) %}--dry-run{% endif %}
