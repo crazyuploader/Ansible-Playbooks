@@ -4,41 +4,41 @@
   become: true
   gather_facts: false
   tasks:
-      - name: Add 'jungle' User
-        ansible.builtin.user:
-            name: jungle
-            shell: /usr/bin/bash
-            groups: sudo
+    - name: Add 'jungle' User
+      ansible.builtin.user:
+        name: jungle
+        shell: /usr/bin/bash
+        groups: sudo
 
-      - name: Add 'jungle' User to the sudoers
-        ansible.builtin.copy:
-            dest: "/etc/sudoers.d/jungle"
-            content: "jungle ALL=(ALL) NOPASSWD: ALL"
-            mode: "0440"
+    - name: Add 'jungle' User to the sudoers
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/jungle"
+        content: "jungle ALL=(ALL) NOPASSWD: ALL"
+        mode: "0440"
 
-      - name: Add SSH Public Key for 'jungle' User
-        ansible.posix.authorized_key:
-            user: jungle
-            state: present
-            key: https://keys.devjugal.com/ssh
+    - name: Add SSH Public Key for 'jungle' User
+      ansible.posix.authorized_key:
+        user: jungle
+        state: present
+        key: https://keys.devjugal.com/ssh
 
-      - name: Disable Password Authentication
-        ansible.builtin.lineinfile:
-            dest: "/etc/ssh/sshd_config"
-            regexp: "^PasswordAuthentication"
-            line: "PasswordAuthentication no"
-            state: present
-            backup: true
+    - name: Disable Password Authentication
+      ansible.builtin.lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        regexp: "^PasswordAuthentication"
+        line: "PasswordAuthentication no"
+        state: present
+        backup: true
 
-      - name: Disable Root Login
-        ansible.builtin.lineinfile:
-            dest: "/etc/ssh/sshd_config"
-            regexp: "^PermitRootLogin"
-            line: "PermitRootLogin no"
-            state: present
-            backup: true
+    - name: Disable Root Login
+      ansible.builtin.lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        regexp: "^PermitRootLogin"
+        line: "PermitRootLogin no"
+        state: present
+        backup: true
 
-      - name: Restart SSH Service
-        ansible.builtin.service:
-            name: ssh
-            state: restarted
+    - name: Restart SSH Service
+      ansible.builtin.service:
+        name: ssh
+        state: restarted

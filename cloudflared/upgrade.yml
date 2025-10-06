@@ -4,56 +4,56 @@
   become: true
 
   vars:
-      deb_urls:
-          amd64: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb"
-          arm64: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb"
+    deb_urls:
+      amd64: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb"
+      arm64: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64.deb"
 
-      service_names:
-          Server01: "cloudflared.service"
-          Server03: "cloudflared.service"
-          Server05: "cloudflared.service"
-          Server06: "cloudflared.service"
-          Server07: "cloudflared.service"
+    service_names:
+      Server01: "cloudflared.service"
+      Server03: "cloudflared.service"
+      Server05: "cloudflared.service"
+      Server06: "cloudflared.service"
+      Server07: "cloudflared.service"
 
   tasks:
-      - name: Get Installed Version
-        ansible.builtin.command:
-            cmd: cloudflared --version
-        register: cloudflared_version
-        changed_when: false
+    - name: Get Installed Version
+      ansible.builtin.command:
+        cmd: cloudflared --version
+      register: cloudflared_version
+      changed_when: false
 
-      - name: Print Installed Version
-        ansible.builtin.debug:
-            msg: "Installed Cloudflared version: {{ cloudflared_version.stdout }}"
+    - name: Print Installed Version
+      ansible.builtin.debug:
+        msg: "Installed Cloudflared version: {{ cloudflared_version.stdout }}"
 
-      - name: Check Architecture
-        ansible.builtin.command: dpkg --print-architecture
-        register: dpkg_architecture
-        changed_when: false
+    - name: Check Architecture
+      ansible.builtin.command: dpkg --print-architecture
+      register: dpkg_architecture
+      changed_when: false
 
-      - name: Print Architecture
-        ansible.builtin.debug:
-            msg: "Detected architecture: {{ dpkg_architecture.stdout }}"
+    - name: Print Architecture
+      ansible.builtin.debug:
+        msg: "Detected architecture: {{ dpkg_architecture.stdout }}"
 
-      - name: Set Architecture Specific URL
-        ansible.builtin.set_fact:
-            deb_url: "{{ deb_urls[dpkg_architecture.stdout] }}"
+    - name: Set Architecture Specific URL
+      ansible.builtin.set_fact:
+        deb_url: "{{ deb_urls[dpkg_architecture.stdout] }}"
 
-      - name: Download Cloudflared .deb Package
-        ansible.builtin.get_url:
-            url: "{{ deb_url }}"
-            dest: "/tmp/cloudflared.deb"
-            mode: "0644"
+    - name: Download Cloudflared .deb Package
+      ansible.builtin.get_url:
+        url: "{{ deb_url }}"
+        dest: "/tmp/cloudflared.deb"
+        mode: "0644"
 
-      - name: Upgrade Cloudflared
-        ansible.builtin.apt:
-            deb: "/tmp/cloudflared.deb"
-            state: present
-        register: cloudflared_upgrade_result
-        notify: Restart Cloudflared Service
+    - name: Upgrade Cloudflared
+      ansible.builtin.apt:
+        deb: "/tmp/cloudflared.deb"
+        state: present
+      register: cloudflared_upgrade_result
+      notify: Restart Cloudflared Service
 
   handlers:
-      - name: Restart Cloudflared Service
-        ansible.builtin.systemd:
-            name: "{{ service_names[inventory_hostname] }}"
-            state: restarted
+    - name: Restart Cloudflared Service
+      ansible.builtin.systemd:
+        name: "{{ service_names[inventory_hostname] }}"
+        state: restarted

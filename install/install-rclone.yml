@@ -3,54 +3,54 @@
   hosts: all
   become: true
   vars:
-      rclone_arch_map:
-          x86_64: amd64
-          aarch64: arm64
-          armv7l: arm
-          armv6l: arm
-          i386: 386
+    rclone_arch_map:
+      x86_64: amd64
+      aarch64: arm64
+      armv7l: arm
+      armv6l: arm
+      i386: 386
   tasks:
-      - name: Set rclone architecture variable
-        ansible.builtin.set_fact:
-            rclone_arch: "{{ rclone_arch_map[ansible_architecture] | default('amd64') }}"
+    - name: Set rclone architecture variable
+      ansible.builtin.set_fact:
+        rclone_arch: "{{ rclone_arch_map[ansible_architecture] | default('amd64') }}"
 
-      - name: Download latest rclone release archive
-        ansible.builtin.get_url:
-            url: "https://downloads.rclone.org/rclone-current-linux-{{ rclone_arch }}.zip"
-            dest: "/tmp/rclone-current-linux-{{ rclone_arch }}.zip"
-            mode: "0644"
+    - name: Download latest rclone release archive
+      ansible.builtin.get_url:
+        url: "https://downloads.rclone.org/rclone-current-linux-{{ rclone_arch }}.zip"
+        dest: "/tmp/rclone-current-linux-{{ rclone_arch }}.zip"
+        mode: "0644"
 
-      - name: Unarchive rclone
-        ansible.builtin.unarchive:
-            src: "/tmp/rclone-current-linux-{{ rclone_arch }}.zip"
-            dest: "/tmp/"
-            remote_src: true
+    - name: Unarchive rclone
+      ansible.builtin.unarchive:
+        src: "/tmp/rclone-current-linux-{{ rclone_arch }}.zip"
+        dest: "/tmp/"
+        remote_src: true
 
-      - name: Move rclone binary to /usr/local/bin
-        ansible.builtin.shell: |
-            set -e
-            d=$(find /tmp -maxdepth 1 -type d -name "rclone-*-linux-{{ rclone_arch }}")
-            cp "$d/rclone" /usr/local/bin/rclone
-        args:
-            creates: /usr/local/bin/rclone
+    - name: Move rclone binary to /usr/local/bin
+      ansible.builtin.shell: |
+        set -e
+        d=$(find /tmp -maxdepth 1 -type d -name "rclone-*-linux-{{ rclone_arch }}")
+        cp "$d/rclone" /usr/local/bin/rclone
+      args:
+        creates: /usr/local/bin/rclone
 
-      - name: Ensure rclone is executable
-        ansible.builtin.file:
-            path: /usr/local/bin/rclone
-            mode: "0755"
-            state: file
+    - name: Ensure rclone is executable
+      ansible.builtin.file:
+        path: /usr/local/bin/rclone
+        mode: "0755"
+        state: file
 
-      - name: Clean up downloaded rclone archive
-        ansible.builtin.file:
-            path: "/tmp/rclone-current-linux-{{ rclone_arch }}.zip"
-            state: absent
-        when: rclone_arch is defined
+    - name: Clean up downloaded rclone archive
+      ansible.builtin.file:
+        path: "/tmp/rclone-current-linux-{{ rclone_arch }}.zip"
+        state: absent
+      when: rclone_arch is defined
 
-      - name: Verify rclone installation and print version
-        ansible.builtin.command: /usr/local/bin/rclone version
-        register: rclone_version_output
-        changed_when: false
+    - name: Verify rclone installation and print version
+      ansible.builtin.command: /usr/local/bin/rclone version
+      register: rclone_version_output
+      changed_when: false
 
-      - name: Debug rclone version
-        ansible.builtin.debug:
-            var: rclone_version_output.stdout
+    - name: Debug rclone version
+      ansible.builtin.debug:
+        var: rclone_version_output.stdout

@@ -1,32 +1,32 @@
 - name: Check if restic repository exists for {{ remote.name }}
   ansible.builtin.shell: |
-      rclone lsd "{{ rclone_path }}" || true
+    rclone lsd "{{ rclone_path }}" || true
   register: repo_check
   environment: "{{ remote.env | combine(global_restic_env) }}"
   changed_when: false
 - name: Initialize restic repository if missing ({{ remote.name }})
   ansible.builtin.command: >
-      restic -r "{{ repo }}" init
+    restic -r "{{ repo }}" init
   environment: "{{ remote.env | combine(global_restic_env) }}"
   register: restic_init_result
   when: repo_check.stdout == ""
   changed_when: "'created restic repository' in restic_init_result.stdout"
 - name: Run restic backup to {{ remote.name }}
   ansible.builtin.command: >
-      restic -r "{{ repo }}"
-      backup {{ backup_paths | join(' ') }}
-      {% if restic_ignore_patterns is defined %}
-      {% for pattern in restic_ignore_patterns %}
-      --exclude '{{ pattern }}'
-      {% endfor %}
-      {% endif %}
-      {% if restic_tags is defined and restic_tags | length > 0 %}--tag "{{ restic_tags }}"{% endif %}
-      --host "{{ inventory_hostname }}"
-      {% if dry_run | default(false) %}--dry-run{% endif %}
-      --verbose
+    restic -r "{{ repo }}"
+    backup {{ backup_paths | join(' ') }}
+    {% if restic_ignore_patterns is defined %}
+    {% for pattern in restic_ignore_patterns %}
+    --exclude '{{ pattern }}'
+    {% endfor %}
+    {% endif %}
+    {% if restic_tags is defined and restic_tags | length > 0 %}--tag "{{ restic_tags }}"{% endif %}
+    --host "{{ inventory_hostname }}"
+    {% if dry_run | default(false) %}--dry-run{% endif %}
+    --verbose
   environment: "{{ remote.env | combine(global_restic_env) }}"
   register: restic_backup
   changed_when: true
 - name: Show restic backup output ({{ remote.name }})
   ansible.builtin.debug:
-      var: restic_backup.stdout
+    var: restic_backup.stdout

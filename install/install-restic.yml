@@ -3,70 +3,70 @@
   hosts: all
   become: true
   vars:
-      restic_arch_map:
-          x86_64: amd64
-          aarch64: arm64
-          armv7l: arm
-          armv6l: arm
-          i386: 386
+    restic_arch_map:
+      x86_64: amd64
+      aarch64: arm64
+      armv7l: arm
+      armv6l: arm
+      i386: 386
   tasks:
-      - name: Set restic architecture variable
-        ansible.builtin.set_fact:
-            restic_arch: "{{ restic_arch_map[ansible_architecture] | default('amd64') }}"
+    - name: Set restic architecture variable
+      ansible.builtin.set_fact:
+        restic_arch: "{{ restic_arch_map[ansible_architecture] | default('amd64') }}"
 
-      - name: Get latest restic version tag
-        ansible.builtin.uri:
-            url: https://api.github.com/repos/restic/restic/releases/latest
-            return_content: true
-        register: restic_release
+    - name: Get latest restic version tag
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/restic/restic/releases/latest
+        return_content: true
+      register: restic_release
 
-      - name: Set restic version fact
-        ansible.builtin.set_fact:
-            restic_version: "{{ restic_release.json.tag_name | regex_replace('^v', '') }}"
+    - name: Set restic version fact
+      ansible.builtin.set_fact:
+        restic_version: "{{ restic_release.json.tag_name | regex_replace('^v', '') }}"
 
-      - name: Download latest restic release
-        ansible.builtin.get_url:
-            url: "https://github.com/restic/restic/releases/download/v{{ restic_version }}/restic_{{ restic_version }}_linux_{{ restic_arch }}.bz2"
-            dest: "/tmp/restic.bz2"
-            mode: "0644"
+    - name: Download latest restic release
+      ansible.builtin.get_url:
+        url: "https://github.com/restic/restic/releases/download/v{{ restic_version }}/restic_{{ restic_version }}_linux_{{ restic_arch }}.bz2"
+        dest: "/tmp/restic.bz2"
+        mode: "0644"
 
-      - name: Ensure bzip2 is installed (for decompressing restic)
-        ansible.builtin.package:
-            name: bzip2
-            state: present
+    - name: Ensure bzip2 is installed (for decompressing restic)
+      ansible.builtin.package:
+        name: bzip2
+        state: present
 
-      - name: Decompress restic binary
-        ansible.builtin.command: "bzip2 -d -f /tmp/restic.bz2"
-        args:
-            creates: "/tmp/restic"
+    - name: Decompress restic binary
+      ansible.builtin.command: "bzip2 -d -f /tmp/restic.bz2"
+      args:
+        creates: "/tmp/restic"
 
-      - name: Move restic binary to /usr/local/bin
-        ansible.builtin.copy:
-            src: "/tmp/restic"
-            dest: /usr/local/bin/restic
-            remote_src: true
-            mode: "0755"
+    - name: Move restic binary to /usr/local/bin
+      ansible.builtin.copy:
+        src: "/tmp/restic"
+        dest: /usr/local/bin/restic
+        remote_src: true
+        mode: "0755"
 
-      - name: Ensure restic is executable
-        ansible.builtin.file:
-            path: /usr/local/bin/restic
-            mode: "0755"
-            state: file
+    - name: Ensure restic is executable
+      ansible.builtin.file:
+        path: /usr/local/bin/restic
+        mode: "0755"
+        state: file
 
-      - name: Clean up downloaded restic archive and binary
-        ansible.builtin.file:
-            path: "{{ item }}"
-            state: absent
-        loop:
-            - "/tmp/restic.bz2"
-            - "/tmp/restic"
-        when: restic_version is defined
+    - name: Clean up downloaded restic archive and binary
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/restic.bz2"
+        - "/tmp/restic"
+      when: restic_version is defined
 
-      - name: Verify restic installation and print version
-        ansible.builtin.command: /usr/local/bin/restic version
-        register: restic_version_output
-        changed_when: false
+    - name: Verify restic installation and print version
+      ansible.builtin.command: /usr/local/bin/restic version
+      register: restic_version_output
+      changed_when: false
 
-      - name: Debug restic version
-        ansible.builtin.debug:
-            var: restic_version_output.stdout
+    - name: Debug restic version
+      ansible.builtin.debug:
+        var: restic_version_output.stdout

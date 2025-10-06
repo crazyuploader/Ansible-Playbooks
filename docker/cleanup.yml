@@ -3,11 +3,11 @@
   hosts: Server01, Server03, Server04, Server05, Server06, Server07, Server08
   become: true
   tasks:
-      - name: Run docker system prune
-        ansible.builtin.command: docker system prune --all --force --volumes
-        register: prune_result
-        changed_when: prune_result.stdout != ''
+    - name: Run docker system prune
+      ansible.builtin.command: docker system prune --all --force --volumes
+      register: prune_result
+      changed_when: prune_result.stdout != ''
 
-      - name: Display the result of docker system prune
-        ansible.builtin.debug:
-            var: prune_result.stdout_lines
+    - name: Display the result of docker system prune
+      ansible.builtin.debug:
+        var: prune_result.stdout_lines

@@ -3,34 +3,34 @@
   hosts: all
   become: true
   tasks:
-      - name: Install unattended-upgrades package
-        ansible.builtin.package:
-            name: unattended-upgrades
-            state: present
+    - name: Install unattended-upgrades package
+      ansible.builtin.package:
+        name: unattended-upgrades
+        state: present
 
-      - name: Configure unattended-upgrades
-        ansible.builtin.copy:
-            dest: /etc/apt/apt.conf.d/20auto-upgrades
-            content: |
-                APT::Periodic::Update-Package-Lists "1";
-                APT::Periodic::Download-Upgradeable-Packages "1";
-                APT::Periodic::AutocleanInterval "7";
-                APT::Periodic::Unattended-Upgrade "1";
-            owner: root
-            group: root
-            mode: "0644"
+    - name: Configure unattended-upgrades
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Download-Upgradeable-Packages "1";
+          APT::Periodic::AutocleanInterval "7";
+          APT::Periodic::Unattended-Upgrade "1";
+        owner: root
+        group: root
+        mode: "0644"
 
-      - name: Enable automatic updates
-        ansible.builtin.systemd:
-            name: unattended-upgrades
-            enabled: true
-            state: started
+    - name: Enable automatic updates
+      ansible.builtin.systemd:
+        name: unattended-upgrades
+        enabled: true
+        state: started
 
-      - name: Check if automatic updates are configured
-        ansible.builtin.shell: unattended-upgrade --dry-run 2>&1
-        changed_when: false
-        register: unattended_upgrade_status
+    - name: Check if automatic updates are configured
+      ansible.builtin.shell: unattended-upgrade --dry-run 2>&1
+      changed_when: false
+      register: unattended_upgrade_status
 
-      - name: Display automatic updates status
-        ansible.builtin.debug:
-            var: unattended_upgrade_status.stdout_lines
+    - name: Display automatic updates status
+      ansible.builtin.debug:
+        var: unattended_upgrade_status.stdout_lines

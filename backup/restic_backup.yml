@@ -4,50 +4,50 @@
   become: true
 
   vars_files:
-      - "{{ vars_file | default('vars/config.yml') }}"
+    - "{{ vars_file | default('vars/config.yml') }}"
 
   tasks:
-      - name: Check if restic is installed
-        ansible.builtin.command: which restic
-        register: restic_check
-        ignore_errors: true
-        changed_when: false
+    - name: Check if restic is installed
+      ansible.builtin.command: which restic
+      register: restic_check
+      ignore_errors: true
+      changed_when: false
 
-      - name: Check if rclone is installed
-        ansible.builtin.command: which rclone
-        register: rclone_check
-        ignore_errors: true
-        changed_when: false
+    - name: Check if rclone is installed
+      ansible.builtin.command: which rclone
+      register: rclone_check
+      ignore_errors: true
+      changed_when: false
 
-      - name: Fail if restic is not installed
-        ansible.builtin.fail:
-            msg: "Restic is not installed on {{ inventory_hostname }}"
-        when: restic_check.rc != 0
+    - name: Fail if restic is not installed
+      ansible.builtin.fail:
+        msg: "Restic is not installed on {{ inventory_hostname }}"
+      when: restic_check.rc != 0
 
-      - name: Fail if rclone is not installed
-        ansible.builtin.fail:
-            msg: "Rclone is not installed on {{ inventory_hostname }}"
-        when: rclone_check.rc != 0
+    - name: Fail if rclone is not installed
+      ansible.builtin.fail:
+        msg: "Rclone is not installed on {{ inventory_hostname }}"
+      when: rclone_check.rc != 0
 
-      - name: Update rclone
-        ansible.builtin.command: rclone self-update
-        environment: "{{ global_restic_env }}"
-        register: rclone_update_result
-        changed_when: "'already up to date' not in rclone_update_result.stderr and 'already up to date' not in rclone_update_result.stdout"
-        failed_when: "'ERROR' in rclone_update_result.stderr or 'ERROR' in rclone_update_result.stdout"
+    - name: Update rclone
+      ansible.builtin.command: rclone self-update
+      environment: "{{ global_restic_env }}"
+      register: rclone_update_result
+      changed_when: "'already up to date' not in rclone_update_result.stderr and 'already up to date' not in rclone_update_result.stdout"
+      failed_when: "'ERROR' in rclone_update_result.stderr or 'ERROR' in rclone_update_result.stdout"
 
-      - name: Update restic
-        ansible.builtin.command: restic self-update
-        environment: "{{ global_restic_env }}"
-        register: restic_update_result
-        changed_when: "'already up to date' not in restic_update_result.stderr and 'already up to date' not in restic_update_result.stdout"
-        failed_when: "'ERROR' in restic_update_result.stderr or 'ERROR' in restic_update_result.stdout"
+    - name: Update restic
+      ansible.builtin.command: restic self-update
+      environment: "{{ global_restic_env }}"
+      register: restic_update_result
+      changed_when: "'already up to date' not in restic_update_result.stderr and 'already up to date' not in restic_update_result.stdout"
+      failed_when: "'ERROR' in restic_update_result.stderr or 'ERROR' in restic_update_result.stdout"
 
-      - name: Iterate over each rclone remote and perform backup
-        ansible.builtin.include_tasks: tasks/restic_backup_per_remote.yml
-        loop: "{{ rclone_remotes }}"
-        loop_control:
-            loop_var: remote
-        vars:
-            repo: "rclone:{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
-            rclone_path: "{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
+    - name: Iterate over each rclone remote and perform backup
+      ansible.builtin.include_tasks: tasks/restic_backup_per_remote.yml
+      loop: "{{ rclone_remotes }}"
+      loop_control:
+        loop_var: remote
+      vars:
+        repo: "rclone:{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
+        rclone_path: "{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"

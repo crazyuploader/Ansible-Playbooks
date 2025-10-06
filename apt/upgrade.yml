@@ -4,17 +4,17 @@
   become: true
 
   tasks:
-      - name: Update apt cache
-        ansible.builtin.apt:
-            update_cache: true
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
 
-      - name: Upgrade all packages
-        ansible.builtin.apt:
-            upgrade: dist
-            autoclean: true
-            autoremove: true
-        register: apt_upgrade_output
+    - name: Upgrade all packages
+      ansible.builtin.apt:
+        upgrade: dist
+        autoclean: true
+        autoremove: true
+      register: apt_upgrade_output
 
-      - name: Print Upgraded Packages
-        ansible.builtin.debug:
-            var: apt_upgrade_output.stdout_lines
+    - name: Print Upgraded Packages
+      ansible.builtin.debug:
+        var: apt_upgrade_output.stdout_lines

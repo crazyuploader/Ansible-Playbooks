@@ -3,7 +3,7 @@
   hosts: all
   become: true
   tasks:
-      - name: Generate combined GoAccess report from all subdomain logs
-        ansible.builtin.shell: |
-            goaccess /var/log/caddy/*/access.json -o /usr/share/caddy/report.html --log-format=CADDY
-        changed_when: false
+    - name: Generate combined GoAccess report from all subdomain logs
+      ansible.builtin.shell: |
+        goaccess /var/log/caddy/*/access.json -o /usr/share/caddy/report.html --log-format=CADDY
+      changed_when: false

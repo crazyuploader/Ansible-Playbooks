@@ -1,32 +1,32 @@
 name: Ansible Playbook Lint
 
 on:
-    push:
-        branches:
-            - main
-    pull_request:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
-    lint-and-syntax-check:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v5
+  lint-and-syntax-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-            - name: Set up Python
-              uses: actions/setup-python@v6
-              with:
-                  python-version: "3.13"
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
 
-            - name: Install Ansible and Ansible Lint
-              run: |
-                  pip install ansible ansible-lint
-                  ansible-galaxy collection install ansible.posix
+      - name: Install Ansible and Ansible Lint
+        run: |
+          pip install ansible ansible-lint
+          ansible-galaxy collection install ansible.posix
 
-            - name: Run Ansible Lint
-              run: |
-                  ansible-lint --exclude .github
+      - name: Run Ansible Lint
+        run: |
+          ansible-lint --exclude .github
 
-            - name: Run Ansible Playbook Syntax Check
-              run: |
-                  find . -name "*.yml" -not -path "./.github/workflows/*" -not -path "**/vars/*.yml" -print0 | xargs -0 -I {} ansible-playbook --syntax-check {}
+      - name: Run Ansible Playbook Syntax Check
+        run: |
+          find . -name "*.yml" -not -path "./.github/workflows/*" -not -path "**/vars/*.yml" -not -path "**/tasks/*.yml" -print0 | xargs -0 -I {} ansible-playbook --syntax-check {}
