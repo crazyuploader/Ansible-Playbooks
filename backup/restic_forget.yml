@@ -16,17 +16,22 @@
           {% if restic_forget.keep_within_weekly is defined %}--keep-within-weekly {{ restic_forget.keep_within_weekly }}{% endif %}
           {% if restic_forget.keep_within_monthly is defined %}--keep-within-monthly {{ restic_forget.keep_within_monthly }}{% endif %}
           {% if restic_forget.prune | default(false) %}--prune{% endif %}
-          --host "{{ inventory_hostname }}" --verbose
+          --host "{{ inventory_hostname }}"
       changed_when: false
       environment: "{{ remote.env | combine(global_restic_env) }}"
-      register: restic_forget
+      register: restic_forget_result
       loop: "{{ rclone_remotes }}"
       loop_control:
         loop_var: remote
+        label: "{{ remote.name }}"
       vars:
         repo: "{{ remote.repo | default('rclone:' + remote.name + ':/') }}"
+      failed_when: restic_forget_result.rc != 0
 
     - name: Show restic forget/prune output for each remote
       ansible.builtin.debug:
-        msg: "{{ item.stdout_lines }}"
-      loop: "{{ restic_forget.results }}"
+        msg:
+          - "Remote: {{ item.remote.name }}"
+          - "{{ item.stdout_lines }}"
+      loop: "{{ restic_forget_result.results }}"
+      when: item.stdout_lines is defined
