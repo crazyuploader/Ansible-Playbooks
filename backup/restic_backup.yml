@@ -51,4 +51,4 @@
       no_log: true
       vars:
         repo: "rclone:{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
-        rclone_path: "rclone:{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
+        rclone_path: "{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
