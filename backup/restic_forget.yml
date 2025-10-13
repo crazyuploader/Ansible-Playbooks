@@ -24,7 +24,6 @@
       loop_control:
         loop_var: remote
         label: "{{ remote.name }}"
-      no_log: true
       vars:
         repo: "{{ remote.repo | default('rclone:' + remote.name + ':/') }}"
       failed_when: restic_forget_result.rc != 0
