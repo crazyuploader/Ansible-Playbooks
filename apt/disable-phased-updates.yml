@@ -1,0 +1,31 @@
+---
+- name: Disable apt phased updates
+  hosts: Server01, Server02, Server03, Server04, Server06, Server07
+  become: true
+
+  tasks:
+    - name: Create phased updates configuration
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/99-Phased-Updates
+        content: |
+          Update-Manager::Always-Include-Phased-Updates true;
+          APT::Get::Always-Include-Phased-Updates true;
+        owner: root
+        group: root
+        mode: "0644"
+      register: phased_config
+
+    - name: Update apt cache to apply changes
+      ansible.builtin.apt:
+        update_cache: true
+      when: phased_config.changed
+
+    - name: Verify configuration is applied
+      ansible.builtin.command: cat /etc/apt/apt.conf.d/99-Phased-Updates
+      changed_when: false
+      register: config_content
+
+    - name: Display configuration
+      ansible.builtin.debug:
+        msg: "Phased updates disabled on {{ inventory_hostname }}"
+      when: phased_config.changed
