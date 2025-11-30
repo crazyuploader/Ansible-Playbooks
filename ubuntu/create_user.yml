@@ -1,24 +1,24 @@
 ---
-- name: Configure Jungle User and SSH
+- name: Configure User and SSH
   hosts: all
   become: true
   gather_facts: false
   tasks:
-    - name: Add 'jungle' User
+    - name: Add User ({{ user | default('jungle') }})
       ansible.builtin.user:
-        name: jungle
+        name: "{{ user | default('jungle') }}"
         shell: /usr/bin/bash
         groups: sudo
 
-    - name: Add 'jungle' User to the sudoers
+    - name: Add User to the sudoers ({{ user | default('jungle') }})
       ansible.builtin.copy:
-        dest: "/etc/sudoers.d/jungle"
-        content: "jungle ALL=(ALL) NOPASSWD: ALL"
+        dest: "/etc/sudoers.d/{{ user | default('jungle') }}"
+        content: "{{ user | default('jungle') }} ALL=(ALL) NOPASSWD: ALL"
         mode: "0440"
 
-    - name: Add SSH Public Key for 'jungle' User
+    - name: Add SSH Public Key for User ({{ user | default('jungle') }})
       ansible.posix.authorized_key:
-        user: jungle
+        user: "{{ user | default('jungle') }}"
         state: present
         key: https://keys.devjugal.com/ssh
 
