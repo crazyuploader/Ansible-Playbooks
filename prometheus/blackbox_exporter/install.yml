@@ -1,0 +1,74 @@
+---
+- hosts: Server01, Server02, Server03, Server06, Server07, Server12, PVE-i3-01
+  become: yes
+  roles:
+    - role: prometheus.prometheus.blackbox_exporter
+      vars:
+        blackbox_exporter_version: "latest"
+        blackbox_exporter_web_listen_address: "0.0.0.0:9115"
+
+        # User and Group settings
+        blackbox_exporter_system_user: "blackbox"
+        blackbox_exporter_system_group: "blackbox"
+
+        blackbox_exporter_configuration_modules:
+          # HTTP probes
+          http_2xx:
+            prober: http
+            timeout: 5s
+            http:
+              valid_status_codes: [200]
+              method: GET
+              follow_redirects: true
+              preferred_ip_protocol: "ip4"
+
+          # HTTP POST probes
+          http_post_2xx:
+            prober: http
+            timeout: 5s
+            http:
+              method: POST
+              valid_status_codes: [200]
+
+          # HTTPS with SSL verification
+          https_2xx:
+            prober: http
+            timeout: 5s
+            http:
+              valid_status_codes: [200]
+              fail_if_not_ssl: true
+              preferred_ip_protocol: "ip4"
+
+          # TCP probes
+          tcp_connect:
+            prober: tcp
+            timeout: 5s
+            tcp:
+              preferred_ip_protocol: "ip4"
+
+          # DNS probes
+          dns_udp:
+            prober: dns
+            timeout: 5s
+            dns:
+              transport_protocol: "udp"
+              preferred_ip_protocol: "ip4"
+              query_name: "example.com"
+              query_type: "A"
+
+          # DNS TCP probes
+          dns_tcp:
+            prober: dns
+            timeout: 5s
+            dns:
+              transport_protocol: "tcp"
+              preferred_ip_protocol: "ip4"
+              query_name: "example.com"
+              query_type: "A"
+
+          # ICMP ping
+          icmp:
+            prober: icmp
+            timeout: 5s
+            icmp:
+              preferred_ip_protocol: "ip4"
