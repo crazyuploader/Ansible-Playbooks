@@ -88,10 +88,10 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 ### Prometheus
 
 - **[Install Blackbox Exporter](prometheus/blackbox_exporter/install.yml)**:
-  This playbook installs the Blackbox Exporter, which allows you to collect and report hardware and OS metrics exposed by \*nix kernels, integrated as a systemd service.
+  This playbook installs the Blackbox Exporter, which allows you to collect and report network metrics such as ICMP, HTTP, etc.
 
 - **[Install Node Exporter](prometheus/node_exporter/install.yml)**:
-  This playbook installs the Node Exporter, which allows you to collect and report hardware and OS metrics exposed by \*nix kernels, integrated as a systemd service.
+  This playbook installs the Node Exporter, which allows you to collect and report hardware and OS metrics exposed by the Linux operating system.
 
 ### Speedtest
 
