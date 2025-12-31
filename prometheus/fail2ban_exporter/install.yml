@@ -1,0 +1,23 @@
+---
+- name: Install Fail2ban Exporter
+  hosts: Server01, Server02, Server03, Server06, Server12
+  become: true
+
+  pre_tasks:
+    - name: Ensure fail2ban is installed
+      ansible.builtin.package:
+        name: fail2ban
+        state: present
+
+    - name: Ensure fail2ban service is running
+      ansible.builtin.systemd_service:
+        name: fail2ban
+        state: started
+        enabled: true
+
+  roles:
+    - role: prometheus.prometheus.fail2ban_exporter
+      vars:
+        fail2ban_exporter_web_listen_address: "0.0.0.0:9191"
+        fail2ban_exporter_system_user: "root"
+        fail2ban_exporter_system_group: "root"
