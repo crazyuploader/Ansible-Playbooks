@@ -87,13 +87,11 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 
 ### Prometheus
 
-#### Node Exporter
+- **[Install Blackbox Exporter](prometheus/blackbox_exporter/install.yml)**:
+  This playbook installs the Blackbox Exporter, which allows you to collect and report hardware and OS metrics exposed by \*nix kernels, integrated as a systemd service.
 
 - **[Install Node Exporter](prometheus/node_exporter/install.yml)**:
   This playbook installs the Node Exporter, which allows you to collect and report hardware and OS metrics exposed by \*nix kernels, integrated as a systemd service.
-
-- **[Systemd Service Template](prometheus/node_exporter/node_exporter.service.j2)**:
-  A Jinja2 template to define the Node Exporter as a systemd service for consistent management and startup.
 
 ### Speedtest
 
