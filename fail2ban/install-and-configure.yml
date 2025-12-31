@@ -1,6 +1,6 @@
 ---
 - name: Set up Fail2ban for SSH
-  hosts: all
+  hosts: cloud
   become: true
   tasks:
     - name: Install Fail2ban

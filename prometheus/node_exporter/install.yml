@@ -1,6 +1,6 @@
 ---
 - name: Install Node Exporter using Prometheus collection
-  hosts: all
+  hosts: "Servers:!fedora"
   become: true
 
   roles:

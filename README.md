@@ -96,6 +96,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install Node Exporter](prometheus/node_exporter/install.yml)**:
   This playbook installs the Node Exporter, which allows you to collect and report hardware and OS metrics exposed by the Linux operating system.
 
+- **[Install Systemd Exporter](prometheus/systemd_exporter/install.yml)**:
+  This playbook installs the Systemd Exporter, which allows you to collect and report systemd metrics.
+
 ### Speedtest
 
 - **[Install Speedtest](speedtest/install.yml)**:

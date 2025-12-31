@@ -1,5 +1,6 @@
 ---
-- hosts: Server01, Server02, Server03, Server06, Server07, Server12, PVE-i3-01
+- name: Install Blackbox Exporter
+  hosts: "Servers:!fedora"
   become: yes
   roles:
     - role: prometheus.prometheus.blackbox_exporter
