@@ -1,6 +1,6 @@
 ---
 - name: Disable apt phased updates
-  hosts: Server01, Server02, Server03, Server04, Server06, Server07
+  hosts: "Servers:!fedora"
   become: true
 
   tasks:
