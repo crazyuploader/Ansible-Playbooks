@@ -112,6 +112,14 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[SSH Keys](ssh_keys/add_key.yml)**:
   This playbook adds desired SSH Keys either from GitHub or manually from [ssh_keys/vars/keys.yml](ssh_keys/vars/keys.yml).
 
+### Sysctl
+
+- **[TCP Tweaks](sysctl/tcp_tweaks.yml)**:
+  This playbook increases system-wide and per-connection buffer limits to 128MB. It tunes `net.core.rmem_max`, `net.core.wmem_max`, `net.ipv4.tcp_rmem`, and `net.ipv4.tcp_wmem` to improve performance on high-bandwidth links.
+
+- **[UDP Buffer Size](sysctl/udp_buffer_size.yml)**:
+  This playbook increases UDP receive and send buffer sizes to ~7.5MB to optimize QUIC transfer speeds. It sets `net.core.rmem_max` and `net.core.wmem_max`.
+
 ### Ubuntu
 
 - **[Add jungle User & Disable Root Login](ubuntu/jungle.yml)**:
