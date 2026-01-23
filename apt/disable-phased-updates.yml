@@ -14,18 +14,20 @@
         group: root
         mode: "0644"
       register: phased_config
-
-    - name: Update apt cache to apply changes
-      ansible.builtin.apt:
-        update_cache: true
-      when: phased_config.changed
+      notify:
+        - Update apt cache to apply changes
+        - Display configuration
 
     - name: Verify configuration is applied
       ansible.builtin.command: cat /etc/apt/apt.conf.d/99-Phased-Updates
       changed_when: false
       register: config_content
 
+  handlers:
+    - name: Update apt cache to apply changes
+      ansible.builtin.apt:
+        update_cache: true
+
     - name: Display configuration
       ansible.builtin.debug:
         msg: "Phased updates disabled on {{ inventory_hostname }}"
-      when: phased_config.changed

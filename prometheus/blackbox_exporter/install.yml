@@ -1,7 +1,7 @@
 ---
 - name: Install Blackbox Exporter
   hosts: "Servers:!fedora"
-  become: yes
+  become: true
   roles:
     - role: prometheus.prometheus.blackbox_exporter
       vars:
