@@ -102,6 +102,11 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install Systemd Exporter](prometheus/systemd_exporter/install.yml)**:
   This playbook installs the Systemd Exporter, which allows you to collect and report systemd metrics.
 
+### Reporting
+
+- **[Server Inventory Report](reporting/server_inventory.yml)**:
+  This playbook collects and displays a comprehensive inventory report of your servers, including OS, virtualization type, architecture, CPU cores, RAM, disk size, and uptime.
+
 ### Speedtest
 
 - **[Install Speedtest](speedtest/install.yml)**:
