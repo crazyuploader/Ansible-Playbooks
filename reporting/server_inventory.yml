@@ -3,11 +3,11 @@
   hosts: all, localhost
   gather_facts: true
   tasks:
-    - name: Initialize CSV report  # noqa: run-once[task]
+    - name: Initialize CSV report # noqa: run-once[task]
       ansible.builtin.copy:
         content: "Host,OS,Virtualization,Architecture,Cores,RAM_GB,Disk_GB,Uptime_Days\n"
         dest: /tmp/server_inventory.csv
-        mode: '0644'
+        mode: "0644"
       delegate_to: localhost
       run_once: true
 
@@ -27,12 +27,13 @@
     - name: Write to CSV
       ansible.builtin.lineinfile:
         path: /tmp/server_inventory.csv
-        line: "{{ inventory_hostname }},{{ ansible_distribution }} {{ ansible_distribution_version }},\
-               {{ ansible_virtualization_type | default('physical') }},{{ ansible_architecture }},\
-               {{ ansible_processor_vcpus }},{{ (ansible_memtotal_mb / 1024) | round(2) }},\
-               {{ disk_size | round(1) }},{{ (ansible_uptime_seconds / 86400) | int }}"
+        line:
+          "{{ inventory_hostname }},{{ ansible_distribution }} {{ ansible_distribution_version }},\
+          {{ ansible_virtualization_type | default('physical') }},{{ ansible_architecture }},\
+          {{ ansible_processor_vcpus }},{{ (ansible_memtotal_mb / 1024) | round(2) }},\
+          {{ disk_size | round(1) }},{{ (ansible_uptime_seconds / 86400) | int }}"
         create: true
-        mode: '0644'
+        mode: "0644"
       delegate_to: localhost
       run_once: false
       throttle: 1
