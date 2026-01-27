@@ -133,6 +133,11 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Upgrade & Install Essential Packages](ubuntu/basic_system_provision.yml)**:
   This playbook sets up your server by installing essential packages, ensuring that your Ubuntu system is ready for basic operations.
 
+### VnStat
+
+- **[Setup vnStat and Cron Job](vnstat/setup_cron.yml)**:
+  This playbook installs vnStat and configures a cron job to update traffic statistics every minute, saving the output to a specified file.
+
 ## Notes
 
 Ensure you review each playbook and update any necessary variables according to your environment specifics before running them. This will help in avoiding unintended changes to your systems.

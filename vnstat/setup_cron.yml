@@ -20,5 +20,5 @@
       ansible.builtin.cron:
         name: "Update vnstat stats"
         minute: "*"
-        job: "vnstat --iface {{ ansible_default_ipv4.interface | default('eth0') }} > /usr/share/caddy/stats"
+        job: "vnstat --iface {{ ansible_facts['default_ipv4']['interface'] | default('eth0') }} > /usr/share/caddy/stats"
         state: present
