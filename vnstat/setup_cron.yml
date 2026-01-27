@@ -1,0 +1,24 @@
+---
+- name: Setup vnStat and Cron Job
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure vnstat is installed
+      ansible.builtin.package:
+        name: vnstat
+        state: present
+
+    - name: Ensure Caddy web root exists
+      ansible.builtin.file:
+        path: /usr/share/caddy
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Update vnstat stats cron job
+      ansible.builtin.cron:
+        name: "Update vnstat stats"
+        minute: "*"
+        job: "vnstat --iface {{ ansible_default_ipv4.interface | default('eth0') }} > /usr/share/caddy/stats"
+        state: present
