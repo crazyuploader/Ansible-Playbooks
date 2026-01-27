@@ -1,6 +1,6 @@
 ---
 - name: Generate Server Inventory Report
-  hosts: all
+  hosts: all, localhost
   gather_facts: true
   tasks:
     - name: Initialize CSV report  # noqa: run-once[task]
@@ -18,7 +18,7 @@
     - name: Sum physical disks
       ansible.builtin.set_fact:
         disk_size: "{{ disk_size | float + ((item.value.sectors | default(0) | int) * (item.value.sectorsize | default(0) | int) / (1024**3)) }}"
-      loop: "{{ ansible_devices | dict2items }}"
+      loop: "{{ ansible_devices | default({}) | dict2items }}"
       when:
         - item.key is match('^(sd|vd|nvme|hd)[a-z]+$')
         - item.value.sectors is defined
