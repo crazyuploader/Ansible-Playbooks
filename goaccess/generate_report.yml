@@ -5,5 +5,5 @@
   tasks:
     - name: Generate combined GoAccess report from all subdomain logs
       ansible.builtin.shell: |
-        goaccess /var/log/caddy/*/access.json -o /usr/share/caddy/report.html --log-format=CADDY
+        goaccess /var/log/caddy/*/access.json -o /var/lib/caddy-stats/goaccess.html --log-format=CADDY
       changed_when: false
