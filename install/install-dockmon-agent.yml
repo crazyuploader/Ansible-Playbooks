@@ -1,0 +1,50 @@
+---
+- name: Install and configure Dockmon Agent
+  hosts: 'all:!Server02'
+  gather_facts: false
+
+  vars_prompt:
+    - name: registration_token
+      prompt: "Please enter your Dockmon registration token"
+      private: true
+
+  tasks:
+    - name: Verify that docker and docker compose are available
+      ansible.builtin.command: docker compose version
+      register: docker_check
+      changed_when: false
+      failed_when: docker_check.rc != 0
+
+    - name: Ensure the dockmon agent directory exists
+      ansible.builtin.file:
+        path: "~/work/dockmon/agent"
+        state: directory
+        mode: "0755"
+
+    - name: Place docker-compose.yml file
+      ansible.builtin.copy:
+        dest: "~/work/dockmon/agent/docker-compose.yml"
+        content: |
+          services:
+              dockmon-agent:
+                  container_name: dockmon-agent
+                  restart: unless-stopped
+                  volumes:
+                      - /var/run/docker.sock:/var/run/docker.sock:ro
+                      - ./data:/data
+                  environment:
+                      - DOCKMON_URL=https://100.64.0.2:8001
+                      - INSECURE_SKIP_VERIFY=true
+                      - REGISTRATION_TOKEN={{ registration_token }}
+                  logging:
+                      options:
+                          max-size: 64m
+                  image: ghcr.io/darthnorse/dockmon-agent:latest
+        mode: "0644"
+
+    - name: Start dockmon-agent using docker compose (Optional)
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: "~/work/dockmon/agent"
+      register: docker_compose_output
+      changed_when: "'Started' in docker_compose_output.stdout or 'Created' in docker_compose_output.stdout"

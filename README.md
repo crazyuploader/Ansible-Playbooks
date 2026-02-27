@@ -65,6 +65,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install Caddy Server](install/install-caddy-server.yml)**:
   This playbook install Caddy Server.
 
+- **[Install Dockmon Agent](install/install-dockmon-agent.yml)**:
+  This playbook installs and configures the Dockmon agent along with its docker-compose setup.
+
 - **[Install GoAccess](install/install-goacess.yml)**:
   This playbook install GoAccess.
 
