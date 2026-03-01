@@ -4,12 +4,6 @@
   become: true # Ensure tasks are run with elevated privileges for necessary operations
   gather_facts: true # Gather system facts to determine architecture and other details
 
-  vars:
-    version: "0.19.12"
-    tar_urls:
-      x86_64: "https://github.com/natesales/q/releases/download/v{{ version }}/q_{{ version }}_linux_amd64.tar.gz"
-      aarch64: "https://github.com/natesales/q/releases/download/v{{ version }}/q_{{ version }}_linux_arm64.tar.gz"
-
   tasks:
     - name: Ensure /usr/local/bin directory exists
       ansible.builtin.file:
@@ -18,12 +12,28 @@
         mode: "0755"
       # Ensures the target directory for the binary exists
 
+    - name: Get latest q version tag
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/natesales/q/releases/latest
+        return_content: true
+      register: q_release
+
+    - name: Set q version fact
+      ansible.builtin.set_fact:
+        version: "{{ q_release.json.tag_name | regex_replace('^v', '') }}"
+
     - name: Check system architecture
       ansible.builtin.command:
         cmd: uname -m
       register: architecture
       changed_when: false
       # Capture system architecture, storing it in a variable
+
+    - name: Set tar_urls map fact
+      ansible.builtin.set_fact:
+        tar_urls:
+          x86_64: "https://github.com/natesales/q/releases/download/v{{ version }}/q_{{ version }}_linux_amd64.tar.gz"
+          aarch64: "https://github.com/natesales/q/releases/download/v{{ version }}/q_{{ version }}_linux_arm64.tar.gz"
 
     - name: Print detected architecture
       ansible.builtin.debug:
