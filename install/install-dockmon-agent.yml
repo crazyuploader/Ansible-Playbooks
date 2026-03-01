@@ -1,6 +1,6 @@
 ---
 - name: Install and configure Dockmon Agent
-  hosts: 'all:!Server02'
+  hosts: "all:!Server02"
   gather_facts: false
 
   vars_prompt:

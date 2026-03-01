@@ -83,6 +83,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install Restic](install/install-restic.yml)**:
   This playbook installs Restic, a program that allows you to backup your files.
 
+- **[Install Zoxide](install/install-zoxide.yml)**:
+  This playbook installs Zoxide, a command-line tool that provides a fuzzy finder for directories.
+
 ### NTP
 
 - **[NTP - Setup Time Synchronization](ntp/install-and-configure.yml)**:

@@ -1,0 +1,83 @@
+---
+- name: Download and install zoxide binary
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    zoxide_arch_map:
+      x86_64: "x86_64-unknown-linux-musl"
+      aarch64: "aarch64-unknown-linux-musl"
+      armv7l: "armv7-unknown-linux-musleabihf"
+      armv6l: "arm-unknown-linux-musleabihf"
+      i386: "i686-unknown-linux-musl"
+
+  tasks:
+    - name: Ensure /usr/local/bin directory exists
+      ansible.builtin.file:
+        path: "/usr/local/bin"
+        state: directory
+        mode: "0755"
+
+    - name: Set zoxide release architecture variable
+      ansible.builtin.set_fact:
+        zoxide_release_arch: "{{ zoxide_arch_map[ansible_architecture] | default('x86_64-unknown-linux-musl') }}"
+
+    - name: Get latest zoxide version tag
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/ajeetdsouza/zoxide/releases/latest
+        return_content: true
+      register: zoxide_release
+
+    - name: Set zoxide version fact
+      ansible.builtin.set_fact:
+        zoxide_version: "{{ zoxide_release.json.tag_name | regex_replace('^v', '') }}"
+
+    - name: Download latest zoxide binary tarball
+      ansible.builtin.get_url:
+        url: "https://github.com/ajeetdsouza/zoxide/releases/download/v{{ zoxide_version }}/zoxide-{{ zoxide_version }}-{{ zoxide_release_arch }}.tar.gz"
+        dest: "/tmp/zoxide.tar.gz"
+        mode: "0644"
+
+    - name: Ensure /tmp/zoxide directory exists
+      ansible.builtin.file:
+        path: "/tmp/zoxide"
+        state: directory
+        mode: "0755"
+
+    - name: Extract zoxide binary
+      ansible.builtin.unarchive:
+        src: "/tmp/zoxide.tar.gz"
+        dest: "/tmp/zoxide/"
+        remote_src: true
+
+    - name: Move zoxide binary to /usr/local/bin
+      ansible.builtin.copy:
+        src: "/tmp/zoxide/zoxide"
+        dest: "/usr/local/bin/zoxide"
+        remote_src: true
+        mode: "0755"
+
+    - name: Verify zoxide installation
+      ansible.builtin.command: zoxide --version
+      register: zoxide_version_cmd
+      changed_when: false
+
+    - name: Print installed zoxide version
+      ansible.builtin.debug:
+        msg: "Installed zoxide version: {{ zoxide_version_cmd.stdout }}"
+
+    - name: Clean up downloaded zoxide files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/zoxide.tar.gz"
+        - "/tmp/zoxide"
+
+    - name: Add zoxide initialization to ~/.bashrc
+      ansible.builtin.lineinfile:
+        path: ~/.bashrc
+        line: 'eval "$(zoxide init bash)"'
+        create: true
+      become: false

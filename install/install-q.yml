@@ -5,7 +5,7 @@
   gather_facts: true # Gather system facts to determine architecture and other details
 
   vars:
-    version: "0.19.2"
+    version: "0.19.12"
     tar_urls:
       x86_64: "https://github.com/natesales/q/releases/download/v{{ version }}/q_{{ version }}_linux_amd64.tar.gz"
       aarch64: "https://github.com/natesales/q/releases/download/v{{ version }}/q_{{ version }}_linux_arm64.tar.gz"
