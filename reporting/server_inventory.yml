@@ -5,7 +5,7 @@
   tasks:
     - name: Initialize CSV report # noqa: run-once[task]
       ansible.builtin.copy:
-        content: "Host,OS,Virtualization,Architecture,Cores,RAM_GB,Disk_GB,Uptime_Days,Swap_GB,Kernel,CPU_Model,Virt_Role,Pkg_Mgr,Svc_Mgr\n"
+        content: "Host,OS,Virtualization,Architecture,Cores,RAM_GB,Disk_GB,Uptime_Days,Swap_GB,CPU_Model,Kernel,Virt_Role,Pkg_Mgr,Svc_Mgr\n"
         dest: /tmp/server_inventory.csv
         mode: "0644"
       delegate_to: localhost
@@ -67,10 +67,10 @@
           {{ disk_size | round(1) }},\
           {{ (ansible_facts['uptime_seconds'] | default(0) / 86400) | int }},\
           {{ (ansible_facts['swaptotal_mb'] | default(0) / 1024) | round(2) }},\
-          {{ ansible_facts['kernel'] | default('') }},\
           {{ (ansible_facts['processor'] if (ansible_facts['processor'] is string)
                else (ansible_facts['processor'] | select('search', ' ') | list | unique | first | default('unknown')))
                | replace(',', '') }},\
+          {{ ansible_facts['kernel'] | default('') }},\
           {{ ansible_facts['virtualization_role'] | default('') }},\
           {{ ansible_facts['pkg_mgr'] | default('') }},\
           {{ ansible_facts['service_mgr'] | default('') }}"
