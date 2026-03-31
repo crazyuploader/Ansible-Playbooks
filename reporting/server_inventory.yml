@@ -5,7 +5,7 @@
   tasks:
     - name: Initialize CSV report # noqa: run-once[task]
       ansible.builtin.copy:
-        content: "Host,OS,Virtualization,Architecture,Cores,RAM_GB,Disk_GB,Uptime_Days\n"
+        content: "Host,OS,Virtualization,Architecture,Cores,RAM_GB,Disk_GB,Uptime_Days,Swap_GB,Kernel,CPU_Model,Virt_Role,Pkg_Mgr,Svc_Mgr\n"
         dest: /tmp/server_inventory.csv
         mode: "0644"
       delegate_to: localhost
@@ -15,25 +15,86 @@
       ansible.builtin.set_fact:
         disk_size: 0
 
-    - name: Sum physical disks
+    - name: Sum physical disks (Linux)
       ansible.builtin.set_fact:
         disk_size: "{{ disk_size | float + ((item.value.sectors | default(0) | int) * (item.value.sectorsize | default(0) | int) / (1024**3)) }}"
-      loop: "{{ ansible_devices | default({}) | dict2items }}"
+      loop: "{{ ansible_facts['devices'] | default({}) | dict2items }}"
       when:
-        - item.key is match('^(sd|vd|nvme|hd)[a-z]+$')
+        - ansible_facts['os_family'] != 'Darwin'
+        - item.key is match('^(sd[a-z]+|vd[a-z]+|hd[a-z]+|nvme[0-9]+n[0-9]+)$')
         - item.value.sectors is defined
         - item.value.sectorsize is defined
+
+    - name: Get disk size (macOS)
+      ansible.builtin.command:
+        cmd: diskutil info /
+      register: diskutil_out
+      changed_when: false
+      when: ansible_facts['os_family'] == 'Darwin'
+
+    - name: Parse disk size (macOS)
+      ansible.builtin.set_fact:
+        disk_size: "{{ (diskutil_out.stdout | regex_search('Disk Size:\\s+[\\d.]+ [A-Z]+\\s+\\((\\d+) Bytes\\)', '\\1') | first | int) / (1024**3) }}"
+      when: ansible_facts['os_family'] == 'Darwin'
+
+    - name: Detect Android
+      ansible.builtin.stat:
+        path: /system/build.prop
+      register: android_check
+
+    - name: Get disk size (Android)
+      ansible.builtin.command:
+        cmd: df -k /storage/emulated
+      register: df_android_out
+      changed_when: false
+      when: android_check.stat.exists
+
+    - name: Parse disk size (Android)
+      ansible.builtin.set_fact:
+        disk_size: "{{ (df_android_out.stdout_lines[1].split()[1] | int) / (1024**2) }}"
+      when: android_check.stat.exists
 
     - name: Write to CSV
       ansible.builtin.lineinfile:
         path: /tmp/server_inventory.csv
         line:
-          "{{ inventory_hostname }},{{ ansible_distribution }} {{ ansible_distribution_version }},\
-          {{ ansible_virtualization_type | default('physical') }},{{ ansible_architecture }},\
-          {{ ansible_processor_vcpus }},{{ (ansible_memtotal_mb / 1024) | round(2) }},\
-          {{ disk_size | round(1) }},{{ (ansible_uptime_seconds / 86400) | int }}"
+          "{{ inventory_hostname }},\
+          {{ ansible_facts['distribution'] | default('') }} {{ ansible_facts['distribution_version'] | default('') }},\
+          {{ ansible_facts['virtualization_type'] | default('physical') }},\
+          {{ ansible_facts['architecture'] | default('') }},\
+          {{ ansible_facts['processor_vcpus'] | default(0) }},\
+          {{ (ansible_facts['memtotal_mb'] | default(0) / 1024) | round(2) }},\
+          {{ disk_size | round(1) }},\
+          {{ (ansible_facts['uptime_seconds'] | default(0) / 86400) | int }},\
+          {{ (ansible_facts['swaptotal_mb'] | default(0) / 1024) | round(2) }},\
+          {{ ansible_facts['kernel'] | default('') }},\
+          {{ (ansible_facts['processor'] if (ansible_facts['processor'] is string)
+               else (ansible_facts['processor'] | select('search', ' ') | list | unique | first | default('unknown')))
+               | replace(',', '') }},\
+          {{ ansible_facts['virtualization_role'] | default('') }},\
+          {{ ansible_facts['pkg_mgr'] | default('') }},\
+          {{ ansible_facts['service_mgr'] | default('') }}"
         create: true
         mode: "0644"
       delegate_to: localhost
       run_once: false
       throttle: 1
+
+    - name: Append TOTAL row to CSV
+      ansible.builtin.shell: |
+        awk -F',' '
+          NR==1 { next }
+          {
+            cores += $5
+            ram   += $6
+            disk  += $7
+            swap  += $9
+            count++
+          }
+          END {
+            printf "TOTAL (%d hosts),,,,%d,%.2f,%.1f,,%.2f,,,,,\n",
+              count, cores, ram, disk, swap
+          }
+        ' /tmp/server_inventory.csv >> /tmp/server_inventory.csv
+      delegate_to: localhost
+      run_once: true
