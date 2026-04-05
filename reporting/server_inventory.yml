@@ -57,8 +57,7 @@
     - name: Write to CSV
       ansible.builtin.lineinfile:
         path: /tmp/server_inventory.csv
-        line:
-          "{{ inventory_hostname }},\
+        line: "{{ inventory_hostname }},\
           {{ ansible_facts['distribution'] | default('') }} {{ ansible_facts['distribution_version'] | default('') }},\
           {{ ansible_facts['virtualization_type'] | default('physical') }},\
           {{ ansible_facts['architecture'] | default('') }},\
@@ -68,8 +67,8 @@
           {{ (ansible_facts['uptime_seconds'] | default(0) / 86400) | int }},\
           {{ (ansible_facts['swaptotal_mb'] | default(0) / 1024) | round(2) }},\
           {{ (ansible_facts['processor'] if (ansible_facts['processor'] is string)
-               else (ansible_facts['processor'] | select('search', ' ') | list | unique | first | default('unknown')))
-               | replace(',', '') }},\
+          else (ansible_facts['processor'] | select('search', ' ') | list | unique | first | default('unknown')))
+          | replace(',', '') }},\
           {{ ansible_facts['kernel'] | default('') }},\
           {{ ansible_facts['virtualization_role'] | default('') }},\
           {{ ansible_facts['pkg_mgr'] | default('') }},\
@@ -80,7 +79,7 @@
       run_once: false
       throttle: 1
 
-    - name: Append TOTAL row to CSV
+    - name: Append TOTAL row to CSV # noqa: run-once[task]
       ansible.builtin.shell: |
         awk -F',' '
           NR==1 { next }
@@ -98,3 +97,4 @@
         ' /tmp/server_inventory.csv >> /tmp/server_inventory.csv
       delegate_to: localhost
       run_once: true
+      changed_when: false

@@ -80,4 +80,5 @@
         path: ~/.bashrc
         line: 'eval "$(zoxide init bash)"'
         create: true
+        mode: "0644"
       become: false
