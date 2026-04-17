@@ -1,0 +1,171 @@
+---
+- name: Install ZFS Exporter
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    zfs_exporter_listen_address: "0.0.0.0:9134"
+    zfs_exporter_user: "root"
+    zfs_exporter_group: "root"
+    zfs_exporter_base_url: "https://github.com/pdf/zfs_exporter/releases/download"
+    zfs_exporter_arch_map:
+      x86_64: amd64
+      aarch64: arm64
+
+  tasks:
+    - name: Fail on unsupported architecture
+      ansible.builtin.fail:
+        msg: "Unsupported architecture: {{ ansible_facts['architecture'] }}"
+      when: ansible_facts['architecture'] not in zfs_exporter_arch_map
+
+    - name: Get latest ZFS Exporter version from GitHub API
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/pdf/zfs_exporter/releases/latest
+        return_content: true
+      register: zfs_exporter_release
+
+    - name: Set ZFS Exporter version fact
+      ansible.builtin.set_fact:
+        zfs_exporter_version: "{{ zfs_exporter_release.json.tag_name | regex_replace('^v', '') }}"
+
+    - name: Set ZFS exporter architecture variable
+      ansible.builtin.set_fact:
+        zfs_exporter_arch: "{{ zfs_exporter_arch_map[ansible_facts['architecture']] }}"
+
+    - name: Print detected ZFS Exporter version
+      ansible.builtin.debug:
+        msg: "Latest ZFS Exporter version: {{ zfs_exporter_version }}"
+
+    - name: Get installed zfs_exporter version
+      ansible.builtin.command: /usr/local/bin/zfs_exporter --version
+      register: zfs_exporter_installed_version
+      changed_when: false
+      failed_when: false
+
+    - name: Set skip_install fact
+      ansible.builtin.set_fact:
+        zfs_exporter_skip_install: >-
+          {{ zfs_exporter_installed_version.rc == 0 and
+             zfs_exporter_version in zfs_exporter_installed_version.stdout }}
+
+    - name: Print install decision
+      ansible.builtin.debug:
+        msg: "{{ 'ZFS Exporter already up to date, skipping install' if zfs_exporter_skip_install else 'Installing ZFS Exporter ' + zfs_exporter_version }}"
+
+    - name: Set download tarball name
+      ansible.builtin.set_fact:
+        zfs_exporter_tarball: "zfs_exporter-{{ zfs_exporter_version }}.linux-{{ zfs_exporter_arch }}.tar.gz"
+      when: not zfs_exporter_skip_install
+
+    - name: Create temporary extraction directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: zfs_exporter
+      register: zfs_exporter_tmpdir
+      when: not zfs_exporter_skip_install
+
+    - name: Download ZFS Exporter release tarball
+      ansible.builtin.get_url:
+        url: "{{ zfs_exporter_base_url }}/v{{ zfs_exporter_version }}/{{ zfs_exporter_tarball }}"
+        dest: "{{ zfs_exporter_tmpdir.path }}/zfs_exporter.tar.gz"
+        mode: "0644"
+      when: not zfs_exporter_skip_install
+
+    - name: Extract ZFS Exporter tarball
+      ansible.builtin.unarchive:
+        src: "{{ zfs_exporter_tmpdir.path }}/zfs_exporter.tar.gz"
+        dest: "{{ zfs_exporter_tmpdir.path }}/"
+        remote_src: true
+        extra_opts:
+          - --strip-components=1
+      when: not zfs_exporter_skip_install
+
+    - name: Install zfs_exporter binary to /usr/local/bin
+      ansible.builtin.copy:
+        src: "{{ zfs_exporter_tmpdir.path }}/zfs_exporter"
+        dest: /usr/local/bin/zfs_exporter
+        remote_src: true
+        mode: "0755"
+        owner: "{{ zfs_exporter_user }}"
+        group: "{{ zfs_exporter_group }}"
+      when: not zfs_exporter_skip_install
+      notify: "restart zfs_exporter"
+
+    - name: Clean up temporary directory
+      ansible.builtin.file:
+        path: "{{ zfs_exporter_tmpdir.path }}"
+        state: absent
+      when: not zfs_exporter_skip_install
+
+    - name: Deploy zfs_exporter systemd service unit
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/zfs_exporter.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=ZFS Exporter for Prometheus
+          Documentation=https://github.com/pdf/zfs_exporter
+          After=network-online.target zfs.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          User={{ zfs_exporter_user }}
+          Group={{ zfs_exporter_group }}
+          ExecStart=/usr/local/bin/zfs_exporter \
+            --web.listen-address={{ zfs_exporter_listen_address }} \
+            --collector.dataset-filesystem \
+            --collector.dataset-volume \
+            --collector.dataset-snapshot \
+            --web.disable-exporter-metrics \
+            --properties.pool="allocated,dedupratio,fragmentation,free,freeing,health,leaked,readonly,size" \
+            --properties.dataset-filesystem="available,logicalused,quota,referenced,used,usedbydataset,written" \
+            --properties.dataset-volume="available,logicalused,referenced,used,usedbydataset,volsize,written" \
+            --properties.dataset-snapshot="logicalused,referenced,used,written" \
+            --deadline=8s \
+            --log.format=json
+          Restart=on-failure
+          RestartSec=5
+          NoNewPrivileges=true
+          ProtectSystem=strict
+          ProtectHome=true
+          ReadWritePaths=/
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: "restart zfs_exporter"
+
+    - name: Enable and start zfs_exporter service
+      ansible.builtin.systemd:
+        name: zfs_exporter
+        enabled: true
+        state: started
+
+    - name: Wait for zfs_exporter to be ready
+      ansible.builtin.wait_for:
+        host: "{{ zfs_exporter_listen_address.split(':')[0] | replace('0.0.0.0', '127.0.0.1') }}"
+        port: "{{ zfs_exporter_listen_address.split(':')[1] }}"
+        timeout: 15
+
+    - name: Verify zfs_exporter is running
+      ansible.builtin.systemd_service:
+        name: zfs_exporter
+      register: zfs_exporter_status
+      failed_when: zfs_exporter_status.status.ActiveState != "active"
+
+    - name: Print zfs_exporter status
+      ansible.builtin.debug:
+        msg: "ZFS Exporter is {{ zfs_exporter_status.status.ActiveState }}"
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+      listen: "restart zfs_exporter"
+
+    - name: Restart zfs_exporter service
+      ansible.builtin.systemd:
+        name: zfs_exporter
+        state: restarted
+      listen: "restart zfs_exporter"

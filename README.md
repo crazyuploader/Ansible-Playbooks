@@ -108,6 +108,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install Systemd Exporter](prometheus/systemd_exporter/install.yml)**:
   This playbook installs the Systemd Exporter, which allows you to collect and report systemd metrics.
 
+- **[Install ZFS Exporter](prometheus/zfs_exporter/install.yml)**:
+  This playbook installs the ZFS Exporter, which allows you to collect and report ZFS pool, dataset, and volume metrics.
+
 ### Reporting
 
 - **[Server Inventory Report](reporting/server_inventory.yml)**:
