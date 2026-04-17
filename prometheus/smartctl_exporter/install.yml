@@ -1,6 +1,6 @@
 ---
 - name: Install Smartctl Exporter
-  hosts: "bare_metal"
+  hosts: PVE, PVE01, PVE02
   become: true
 
   pre_tasks:
@@ -16,3 +16,6 @@
         smartctl_exporter_web_listen_address: "0.0.0.0:9633"
         smartctl_exporter_system_user: "root"
         smartctl_exporter_system_group: "root"
+        smartctl_exporter_smartctl_interval: "60s"
+        smartctl_exporter_smartctl_rescan: "10m"
+        smartctl_exporter_smartctl_devices: "{{ smartctl_devices | default([]) }}"
