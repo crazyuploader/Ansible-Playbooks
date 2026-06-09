@@ -26,10 +26,15 @@
     --verbose
   environment: "{{ remote.env | combine(global_restic_env) }}"
   register: restic_backup
-  changed_when: true
+  changed_when: restic_backup.rc == 0
+  failed_when: false
   retries: "{{ backup_retries | default(3) }}"
   delay: "{{ backup_retry_delay | default(60) }}"
   until: restic_backup.rc == 0
 - name: Show restic backup output ({{ remote.name }})
   ansible.builtin.debug:
     var: restic_backup.stdout
+- name: Track failed remotes
+  ansible.builtin.set_fact:
+    failed_remotes: "{{ (failed_remotes | default([])) + [remote.name] }}"
+  when: restic_backup.rc != 0

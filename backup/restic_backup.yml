@@ -51,3 +51,8 @@
       vars:
         repo: "rclone:{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
         rclone_path: "{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
+
+    - name: Fail if any remotes failed
+      ansible.builtin.fail:
+        msg: "Backup failed for remotes: {{ failed_remotes | join(', ') }}"
+      when: failed_remotes | default([]) | length > 0
