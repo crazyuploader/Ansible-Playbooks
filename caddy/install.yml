@@ -1,0 +1,115 @@
+---
+- name: Install Caddy Server from custom build (caddy.devjugal.com)
+  hosts: all
+  become: true
+
+  vars:
+    go_arch_map:
+      x86_64: amd64
+      aarch64: arm64
+      armv7l: armv7
+      armv8l: armv7
+
+  tasks:
+    - name: Gather facts
+      ansible.builtin.setup:
+
+    - name: Set go_arch fact
+      ansible.builtin.set_fact:
+        go_arch: "{{ go_arch_map[ansible_architecture] | default(ansible_architecture) }}"
+
+    - name: Get latest release from GitHub
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/crazyuploader/caddy/releases/latest
+        body_format: json
+      register: github_release
+      when: ansible_os_family != "Debian"
+
+    - name: Set version fact from release tag
+      ansible.builtin.set_fact:
+        caddy_version: "{{ github_release.json.tag_name | replace('v', '') }}"
+      when: ansible_os_family != "Debian"
+
+    # ── Debian / Ubuntu ──────────────────────────────────────────────
+    - name: Install prerequisites (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - debian-keyring
+          - debian-archive-keyring
+          - apt-transport-https
+          - curl
+          - gnupg2
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Download Caddy custom GPG key (Debian/Ubuntu)
+      ansible.builtin.get_url:
+        url: https://caddy.devjugal.com/public.key
+        dest: /tmp/caddy-custom-archive-keyring.asc
+        mode: "0644"
+      when: ansible_os_family == "Debian"
+
+    - name: Add Caddy custom GPG key (Debian/Ubuntu)
+      ansible.builtin.command:
+        cmd: gpg --dearmor -o /usr/share/keyrings/caddy-custom.gpg /tmp/caddy-custom-archive-keyring.asc
+      args:
+        creates: /usr/share/keyrings/caddy-custom.gpg
+      when: ansible_os_family == "Debian"
+
+    - name: Get dpkg architecture (Debian/Ubuntu)
+      ansible.builtin.command: dpkg --print-architecture
+      register: dpkg_arch
+      changed_when: false
+      when: ansible_os_family == "Debian"
+
+    - name: Add Caddy custom APT repository (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ dpkg_arch.stdout }} signed-by=/usr/share/keyrings/caddy-custom.gpg] https://caddy.devjugal.com stable main"
+        filename: caddy-custom
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install Caddy via APT (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: caddy
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    # ── Fedora / RHEL / CentOS ──────────────────────────────────────
+    - name: Download Caddy RPM (RedHat)
+      ansible.builtin.get_url:
+        url: "https://github.com/crazyuploader/caddy/releases/download/{{ github_release.json.tag_name }}/caddy_{{ caddy_version }}_linux_{{ go_arch }}.rpm"
+        dest: /tmp/caddy.rpm
+        mode: "0644"
+      when: ansible_os_family == "RedHat" and ansible_pkg_mgr in ["dnf", "yum"]
+
+    - name: Install Caddy RPM (RedHat)
+      ansible.builtin.dnf:
+        name: /tmp/caddy.rpm
+        state: present
+        disable_gpg_check: true
+      when: ansible_os_family == "RedHat" and ansible_pkg_mgr in ["dnf", "yum"]
+
+    # ── Alpine ──────────────────────────────────────────────────────
+    - name: Download Caddy APK (Alpine)
+      ansible.builtin.get_url:
+        url: "https://github.com/crazyuploader/caddy/releases/download/{{ github_release.json.tag_name }}/caddy_{{ caddy_version }}_linux_{{ go_arch }}.apk"
+        dest: /tmp/caddy.apk
+        mode: "0644"
+      when: ansible_os_family == "Alpine"
+
+    - name: Install Caddy APK (Alpine)
+      ansible.builtin.command:
+        cmd: apk add --allow-untrusted /tmp/caddy.apk
+      args:
+        creates: /usr/bin/caddy
+      when: ansible_os_family == "Alpine"
+
+    # ── Post-install ─────────────────────────────────────────────────
+    - name: Ensure Caddy service is started and enabled
+      ansible.builtin.systemd:
+        name: caddy
+        state: started
+        enabled: true

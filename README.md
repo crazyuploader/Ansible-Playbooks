@@ -26,6 +26,11 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[APT Packages Upgrade](apt/upgrade.yml)**:
   This playbook upgrades all installed APT packages to their latest versions, keeping your system up-to-date.
 
+### Caddy
+
+- **[Install Caddy Server](caddy/install.yml)**:
+  This playbook installs the custom Caddy web server build from [caddy.devjugal.com](https://caddy.devjugal.com) with essential plugins for DNS challenges, distributed storage, and compression.
+
 ### Cloudflared
 
 - **[Upgrade Cloudflared](cloudflared/upgrade.yml)**:
@@ -63,7 +68,7 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 ### Install
 
 - **[Install Caddy Server](install/install-caddy-server.yml)**:
-  This playbook install Caddy Server.
+  This playbook installs Caddy Server from the official Cloudsmith repository.
 
 - **[Install Dockmon Agent](install/install-dockmon-agent.yml)**:
   This playbook installs and configures the Dockmon agent along with its docker-compose setup.
