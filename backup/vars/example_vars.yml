@@ -16,8 +16,10 @@ backup_paths:
 #   - "/var/cache"
 #   - "*.log"
 
-# Restic backup tags
-restic_tags: "daily,critical"
+# Restic backup tags (each becomes its own --tag)
+restic_tags:
+  - daily
+  - critical
 
 # Restic forget/prune options (for use with restic_forget.yml)
 # Uncomment and adjust as needed

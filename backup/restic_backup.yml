@@ -49,8 +49,11 @@
       loop_control:
         loop_var: remote
       vars:
-        repo: "rclone:{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
-        rclone_path: "{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
+        # Set repo_prefix: "" on a remote to skip the default "backup-restic/" folder
+        # and match an existing repo layout.
+        repo_path: "{{ [remote.repo_prefix | default('backup-restic'), inventory_hostname | lower] | select | join('/') }}"
+        repo: "rclone:{{ remote.name }}:{{ repo_path }}"
+        rclone_path: "{{ remote.name }}:{{ repo_path }}"
 
     - name: Fail if any remotes failed
       ansible.builtin.fail:

@@ -25,7 +25,8 @@
         loop_var: remote
         label: "{{ remote.name }}"
       vars:
-        repo: "rclone:{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
+        repo_path: "{{ [remote.repo_prefix | default('backup-restic'), inventory_hostname | lower] | select | join('/') }}"
+        repo: "rclone:{{ remote.name }}:{{ repo_path }}"
       when: (debug | default(false)) or (lookup('env', 'DEBUG') | lower in ['1', 'true', 'yes'])
 
     - name: Run restic forget/prune for each remote
@@ -50,7 +51,8 @@
         loop_var: remote
         label: "{{ remote.name }}"
       vars:
-        repo: "rclone:{{ remote.name }}:backup-restic/{{ inventory_hostname | lower }}"
+        repo_path: "{{ [remote.repo_prefix | default('backup-restic'), inventory_hostname | lower] | select | join('/') }}"
+        repo: "rclone:{{ remote.name }}:{{ repo_path }}"
       failed_when: restic_forget_result.rc != 0
 
     - name: Show restic forget/prune output for each remote
