@@ -1,0 +1,63 @@
+- name: Check if restic repository exists for {{ remote.name }}
+  ansible.builtin.shell: |
+    rclone lsd "{{ rclone_path }}" || true
+  register: repo_check
+  environment: "{{ remote.env | combine(global_restic_env) }}"
+  changed_when: false
+
+- name: Skip forget/prune, no repo yet for {{ remote.name }}
+  ansible.builtin.debug:
+    msg: "No repo found at {{ repo }} yet, skipping forget/prune"
+  when: repo_check.stdout == ""
+
+- name: Debug restic forget/prune command for {{ remote.name }}
+  ansible.builtin.debug:
+    msg:
+      - "Remote: {{ remote.name }}"
+      - "Command: restic -r {{ repo }} forget
+        {% if restic_forget.keep_last is defined %}--keep-last {{ restic_forget.keep_last }}{% endif %}
+        {% if restic_forget.keep_daily is defined %}--keep-daily {{ restic_forget.keep_daily }}{% endif %}
+        {% if restic_forget.keep_weekly is defined %}--keep-weekly {{ restic_forget.keep_weekly }}{% endif %}
+        {% if restic_forget.keep_monthly is defined %}--keep-monthly {{ restic_forget.keep_monthly }}{% endif %}
+        {% if restic_forget.keep_within_daily is defined %}--keep-within-daily {{ restic_forget.keep_within_daily }}{% endif %}
+        {% if restic_forget.keep_within_weekly is defined %}--keep-within-weekly {{ restic_forget.keep_within_weekly }}{% endif %}
+        {% if restic_forget.keep_within_monthly is defined %}--keep-within-monthly {{ restic_forget.keep_within_monthly }}{% endif %}
+        {% if restic_forget.prune | default(false) %}--prune{% endif %}
+        {% if dry_run | default(false) %}--dry-run{% endif %}
+        --host {{ inventory_hostname }}"
+      - "Environment: {{ remote.env | combine(global_restic_env) }}"
+  when:
+    - repo_check.stdout != ""
+    - (debug | default(false)) or (lookup('env', 'DEBUG') | lower in ['1', 'true', 'yes'])
+
+- name: Run restic forget/prune for {{ remote.name }}
+  ansible.builtin.command:
+    cmd: >
+      restic -r "{{ repo }}" forget
+      {% if restic_forget.keep_last is defined %}--keep-last {{ restic_forget.keep_last }}{% endif %}
+      {% if restic_forget.keep_daily is defined %}--keep-daily {{ restic_forget.keep_daily }}{% endif %}
+      {% if restic_forget.keep_weekly is defined %}--keep-weekly {{ restic_forget.keep_weekly }}{% endif %}
+      {% if restic_forget.keep_monthly is defined %}--keep-monthly {{ restic_forget.keep_monthly }}{% endif %}
+      {% if restic_forget.keep_within_daily is defined %}--keep-within-daily {{ restic_forget.keep_within_daily }}{% endif %}
+      {% if restic_forget.keep_within_weekly is defined %}--keep-within-weekly {{ restic_forget.keep_within_weekly }}{% endif %}
+      {% if restic_forget.keep_within_monthly is defined %}--keep-within-monthly {{ restic_forget.keep_within_monthly }}{% endif %}
+      {% if restic_forget.prune | default(false) %}--prune{% endif %}
+      {% if dry_run | default(false) %}--dry-run{% endif %}
+      --host "{{ inventory_hostname }}"
+  environment: "{{ remote.env | combine(global_restic_env) }}"
+  register: restic_forget_result
+  changed_when: false
+  failed_when: false
+  when: repo_check.stdout != ""
+
+- name: Show restic forget/prune output for {{ remote.name }}
+  ansible.builtin.debug:
+    msg:
+      - "{{ restic_forget_result.stdout }}"
+      - "{{ restic_forget_result.stderr }}"
+  when: restic_forget_result.stdout is defined
+
+- name: Track failed remotes
+  ansible.builtin.set_fact:
+    failed_forget_remotes: "{{ (failed_forget_remotes | default([])) + [remote.name] }}"
+  when: restic_forget_result.rc is defined and restic_forget_result.rc != 0
