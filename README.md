@@ -23,6 +23,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[APT Setup Unattended Upgrades](apt/setup-unattended-upgrades.yml)**:
   This playbook installs the `unattended-upgrades` package and configures your system to receive automatic updates for enhanced security and stability.
 
+- **[Disable Phased Updates](apt/disable-phased-updates.yml)**:
+  This playbook disables APT phased updates by writing a configuration file to `/etc/apt/apt.conf.d/`.
+
 - **[APT Packages Upgrade](apt/upgrade.yml)**:
   This playbook upgrades all installed APT packages to their latest versions, keeping your system up-to-date.
 
@@ -46,6 +49,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 
 - **[Install Docker & Docker Compose](docker/install.yml)**:
   This playbook installs Docker and Docker Compose, providing a robust platform for containerized applications.
+
+- **[Configure Docker Daemon](docker/configure-daemon.yml)**:
+  This playbook writes a `daemon.json` with log rotation settings (max-size 50m, max-file 5) and other Docker daemon options.
 
 ### Fail2ban
 
@@ -87,6 +93,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 
 - **[Install Restic](install/install-restic.yml)**:
   This playbook installs Restic, a program that allows you to backup your files.
+
+- **[Install Sendme](install/install-sendme.yml)**:
+  This playbook installs [Sendme](https://www.iroh.computer/sendme), a peer-to-peer file transfer tool built on iroh. Pin a version with `-e sendme_version=v0.36.0` to skip the GitHub API call.
 
 - **[Install Zoxide](install/install-zoxide.yml)**:
   This playbook installs Zoxide, a command-line tool that provides a fuzzy finder for directories.
@@ -141,8 +150,8 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 
 ### Ubuntu
 
-- **[Add jungle User & Disable Root Login](ubuntu/jungle.yml)**:
-  This playbook creates a new user named `jungle` and disables root login for enhanced security of your server.
+- **[Create User & Disable Root Login](ubuntu/create_user.yml)**:
+  This playbook creates a user (defaults to `jungle`) and disables root login for enhanced security of your server.
 
 - **[Upgrade & Install Essential Packages](ubuntu/basic_system_provision.yml)**:
   This playbook sets up your server by installing essential packages, ensuring that your Ubuntu system is ready for basic operations.

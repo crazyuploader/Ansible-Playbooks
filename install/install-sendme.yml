@@ -1,0 +1,101 @@
+---
+- name: Install sendme binary on all hosts
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    sendme_version: ""
+    sendme_arch_map:
+      x86_64: "x86_64"
+      aarch64: "aarch64"
+    sendme_github_url: https://github.com/n0-computer/sendme/releases/download
+
+  tasks:
+    - name: Ensure /usr/local/bin directory exists
+      ansible.builtin.file:
+        path: /usr/local/bin
+        state: directory
+        mode: "0755"
+
+    - name: Set sendme architecture variable
+      ansible.builtin.set_fact:
+        sendme_arch: >-
+          {{ sendme_arch_map[ansible_facts['architecture']]
+             | default('x86_64') }}
+
+    - name: Get latest sendme release from GitHub
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/n0-computer/sendme/releases/latest
+        return_content: true
+      register: sendme_release
+      when: sendme_version | length == 0
+
+    - name: Set sendme version from latest release
+      ansible.builtin.set_fact:
+        sendme_version: "{{ sendme_release.json.tag_name }}"
+      when: sendme_version | length == 0
+
+    - name: Find sendme release asset URL
+      ansible.builtin.set_fact:
+        sendme_asset_url: >-
+          {{ sendme_release.json.assets
+             | map(attribute='browser_download_url')
+             | select('search', 'sendme-.*-linux-' + sendme_arch + '\\.')
+             | first }}
+      when: sendme_version | length == 0
+
+    - name: Set sendme asset URL from pinned version
+      ansible.builtin.set_fact:
+        sendme_asset_url: "{{ sendme_github_url }}/{{ sendme_version }}/sendme-{{ sendme_version }}-linux-{{ sendme_arch }}.tar.gz"
+      when: sendme_version | length > 0
+
+    - name: Download sendme release archive
+      ansible.builtin.get_url:
+        url: "{{ sendme_asset_url }}"
+        dest: /tmp/sendme-archive
+        mode: "0644"
+
+    - name: Create temporary extraction directory
+      ansible.builtin.file:
+        path: /tmp/sendme
+        state: directory
+        mode: "0755"
+
+    - name: Extract sendme archive (tar)
+      ansible.builtin.unarchive:
+        src: /tmp/sendme-archive
+        dest: /tmp/sendme/
+        remote_src: true
+      when: sendme_asset_url is search('\\.tar')
+
+    - name: Extract sendme archive (zip)
+      ansible.builtin.unarchive:
+        src: /tmp/sendme-archive
+        dest: /tmp/sendme/
+        remote_src: true
+      when: sendme_asset_url is search('\\.zip')
+
+    - name: Move sendme binary to /usr/local/bin
+      ansible.builtin.copy:
+        src: /tmp/sendme/sendme
+        dest: /usr/local/bin/sendme
+        remote_src: true
+        mode: "0755"
+
+    - name: Verify sendme installation
+      ansible.builtin.command: sendme --version
+      register: sendme_version_cmd
+      changed_when: false
+
+    - name: Print installed sendme version
+      ansible.builtin.debug:
+        msg: "Installed sendme version: {{ sendme_version_cmd.stdout }}"
+
+    - name: Clean up sendme files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/sendme-archive
+        - /tmp/sendme
