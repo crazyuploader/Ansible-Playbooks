@@ -1,0 +1,52 @@
+---
+- name: Configure Docker daemon.json
+  hosts: all
+  become: true
+  vars:
+    docker_daemon_log_opts:
+      max-size: "50m"
+      max-file: "5"
+
+  tasks:
+    - name: Read existing daemon.json
+      ansible.builtin.slurp:
+        src: /etc/docker/daemon.json
+      register: existing_daemon_json
+      ignore_errors: true
+
+    - name: Set existing config fact
+      ansible.builtin.set_fact:
+        existing_daemon_config: "{{ existing_daemon_json.content | default('e30=') | b64decode | from_json }}"
+      when: existing_daemon_json is succeeded
+
+    - name: Set empty config fact
+      ansible.builtin.set_fact:
+        existing_daemon_config: {}
+      when: existing_daemon_json is failed
+
+    - name: Merge log-opts into daemon.json
+      ansible.builtin.set_fact:
+        daemon_config: "{{ existing_daemon_config | combine({'log-opts': docker_daemon_log_opts}, recursive=True) }}"
+
+    - name: Ensure Docker config directory exists
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Deploy daemon.json
+      ansible.builtin.copy:
+        content: "{{ daemon_config | to_nice_json }}\n"
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Docker
+
+  handlers:
+    - name: Restart Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
