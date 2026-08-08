@@ -6,7 +6,7 @@
     - name: Remove legacy vnstat cron job
       ansible.builtin.shell: |
         set -o pipefail
-        (crontab -l 2>/dev/null || true) | grep -v "vnstat.*> /usr/share/caddy/stats" | crontab -
+        (crontab -l 2>/dev/null || true) | { grep -v "vnstat.*> /usr/share/caddy/stats" || true; } | crontab -
       args:
         executable: /bin/bash
       changed_when: false
