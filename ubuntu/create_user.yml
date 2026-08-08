@@ -20,7 +20,7 @@
       ansible.posix.authorized_key:
         user: "{{ user | default('jungle') }}"
         state: present
-        key: https://keys.devjugal.com/ssh
+        key: https://github.com/crazyuploader.keys
 
     - name: Disable Password Authentication
       ansible.builtin.lineinfile:
