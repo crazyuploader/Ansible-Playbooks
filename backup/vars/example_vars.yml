@@ -16,6 +16,10 @@ backup_paths:
 #   - "/var/cache"
 #   - "*.log"
 
+# Dump per-container inspect JSON + runlike `docker run` repro script before backup.
+# Skips hosts without Docker. Default: true.
+# docker_metadata_dump_enabled: false
+
 # Restic backup tags (each becomes its own --tag)
 restic_tags:
   - daily

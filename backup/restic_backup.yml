@@ -6,6 +6,9 @@
   vars_files:
     - "{{ vars_file | default('vars/config.yml') }}"
 
+  vars:
+    docker_metadata_dir: /var/backups/docker-metadata
+
   tasks:
     - name: Check if restic is installed
       ansible.builtin.command: which restic
@@ -43,6 +46,14 @@
       changed_when: "'already up to date' not in restic_update_result.stderr and 'already up to date' not in restic_update_result.stdout"
       failed_when: "'ERROR' in restic_update_result.stderr or 'ERROR' in restic_update_result.stdout"
 
+    - name: Dump Docker container/network/volume/image metadata for restore
+      ansible.builtin.include_tasks:
+        file: tasks/docker_metadata_dump.yml
+        apply:
+          tags: [docker_metadata]
+      when: docker_metadata_dump_enabled | default(true)
+      tags: [docker_metadata]
+
     - name: Iterate over each rclone remote and perform backup
       ansible.builtin.include_tasks: tasks/restic_backup_per_remote.yml
       loop: "{{ rclone_remotes }}"
@@ -54,6 +65,11 @@
         repo_path: "{{ [remote.repo_prefix | default('backup-restic'), inventory_hostname | lower] | select | join('/') }}"
         repo: "rclone:{{ remote.name }}:{{ repo_path }}"
         rclone_path: "{{ remote.name }}:{{ repo_path }}"
+
+    - name: Remove Docker metadata dump now that backup is complete
+      ansible.builtin.file:
+        path: "{{ docker_metadata_dir }}"
+        state: absent
 
     - name: Fail if any remotes failed
       ansible.builtin.fail:

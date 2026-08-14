@@ -1,0 +1,142 @@
+---
+- name: Check if Docker is installed
+  ansible.builtin.command: which docker
+  register: docker_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Dump Docker metadata for restore
+  when: docker_check.rc == 0
+  block:
+    - name: Remove stale docker metadata dump
+      ansible.builtin.file:
+        path: "{{ docker_metadata_dir }}"
+        state: absent
+
+    - name: Create docker metadata dump directory
+      ansible.builtin.file:
+        path: "{{ docker_metadata_dir }}"
+        state: directory
+        mode: "0700"
+
+    - name: List all containers (running + stopped)
+      ansible.builtin.command:
+        argv: [docker, ps, -a, --format, "{{ '{{.Names}}' }}"]
+      register: docker_containers
+      changed_when: false
+
+    - name: Inspect each container
+      ansible.builtin.command:
+        argv: [docker, inspect, "{{ item }}"]
+      loop: "{{ docker_containers.stdout_lines }}"
+      register: docker_inspect_results
+      changed_when: false
+
+    - name: Write per-container inspect JSON
+      ansible.builtin.copy:
+        content: "{{ item.stdout }}"
+        dest: "{{ docker_metadata_dir }}/{{ item.item }}.inspect.json"
+        mode: "0600"
+      loop: "{{ docker_inspect_results.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Pull runlike image
+      ansible.builtin.command:
+        argv: [docker, pull, assaflavie/runlike]
+      register: runlike_pull
+      changed_when: false
+      retries: 2
+      delay: 10
+      until: runlike_pull.rc == 0
+
+    - name: Generate equivalent `docker run` command per container
+      ansible.builtin.command:
+        argv: [docker, run, --rm, -i, assaflavie/runlike, --stdin, -p]
+        stdin: "{{ item.stdout }}"
+      loop: "{{ docker_inspect_results.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      register: runlike_results
+      changed_when: false
+      # runlike doesn't cover every docker run flag (healthchecks, --init, static IPs, etc);
+      # non-fatal so one unsupported container doesn't drop the rest
+      failed_when: false
+
+    - name: Write per-container `docker run` repro script
+      ansible.builtin.copy:
+        content: "{{ item.stdout }}"
+        dest: "{{ docker_metadata_dir }}/{{ item.item.item }}.run.sh"
+        mode: "0700"
+      loop: "{{ runlike_results.results }}"
+      loop_control:
+        label: "{{ item.item.item }}"
+      when: item.rc == 0
+
+    - name: Get container overview (human-readable)
+      ansible.builtin.command:
+        argv: [docker, ps, -a]
+      register: docker_ps_overview
+      changed_when: false
+
+    - name: Write container overview
+      ansible.builtin.copy:
+        content: "{{ docker_ps_overview.stdout }}"
+        dest: "{{ docker_metadata_dir }}/_containers.ps.txt"
+        mode: "0600"
+
+    - name: List network IDs
+      ansible.builtin.command:
+        argv: [docker, network, ls, -q]
+      register: docker_networks
+      changed_when: false
+
+    - name: Inspect each network
+      ansible.builtin.command:
+        argv: [docker, network, inspect, "{{ item }}"]
+      loop: "{{ docker_networks.stdout_lines }}"
+      register: docker_network_inspect_results
+      changed_when: false
+
+    - name: Write per-network inspect JSON
+      ansible.builtin.copy:
+        content: "{{ item.stdout }}"
+        dest: "{{ docker_metadata_dir }}/network.{{ item.item }}.json"
+        mode: "0600"
+      loop: "{{ docker_network_inspect_results.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: List volume names
+      ansible.builtin.command:
+        argv: [docker, volume, ls, -q]
+      register: docker_volumes
+      changed_when: false
+
+    - name: Inspect each volume
+      ansible.builtin.command:
+        argv: [docker, volume, inspect, "{{ item }}"]
+      loop: "{{ docker_volumes.stdout_lines }}"
+      register: docker_volume_inspect_results
+      changed_when: false
+
+    - name: Write per-volume inspect JSON
+      ansible.builtin.copy:
+        content: "{{ item.stdout }}"
+        dest: "{{ docker_metadata_dir }}/volume.{{ item.item }}.json"
+        mode: "0600"
+      loop: "{{ docker_volume_inspect_results.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Get image list with digests (exact versions in use)
+      ansible.builtin.command:
+        argv: [docker, images, --digests, --format, "{{ '{{json .}}' }}"]
+      register: docker_images_overview
+      changed_when: false
+
+    - name: Write image list
+      ansible.builtin.copy:
+        content: "{{ docker_images_overview.stdout }}"
+        dest: "{{ docker_metadata_dir }}/_images.list.json"
+        mode: "0600"
