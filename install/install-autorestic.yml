@@ -1,0 +1,74 @@
+---
+- name: Install autorestic binary on all hosts (multi-architecture)
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    autorestic_download_base_url: "https://github.com/cupcakearmy/autorestic/releases/download"
+    autorestic_arch_map:
+      x86_64: amd64
+      aarch64: arm64
+      armv7l: arm
+      armv6l: arm
+      i386: "386"
+  tasks:
+    - name: Set autorestic architecture variable
+      ansible.builtin.set_fact:
+        autorestic_arch: "{{ autorestic_arch_map[ansible_facts['architecture']] | default('amd64') }}"
+
+    - name: Get latest autorestic version tag
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/cupcakearmy/autorestic/releases/latest
+        return_content: true
+      register: autorestic_release
+
+    - name: Set autorestic version fact
+      ansible.builtin.set_fact:
+        autorestic_version: "{{ autorestic_release.json.tag_name | regex_replace('^v', '') }}"
+
+    - name: Download latest autorestic release
+      ansible.builtin.get_url:
+        url: "{{ autorestic_download_base_url }}/v{{ autorestic_version }}/autorestic_{{ autorestic_version }}_linux_{{ autorestic_arch }}.bz2"
+        dest: "/tmp/autorestic.bz2"
+        mode: "0644"
+
+    - name: Ensure bzip2 is installed (for decompressing autorestic)
+      ansible.builtin.package:
+        name: bzip2
+        state: present
+
+    - name: Decompress autorestic binary
+      ansible.builtin.command: "bzip2 -d -f /tmp/autorestic.bz2"
+      args:
+        creates: "/tmp/autorestic"
+
+    - name: Move autorestic binary to /usr/local/bin
+      ansible.builtin.copy:
+        src: "/tmp/autorestic"
+        dest: /usr/local/bin/autorestic
+        remote_src: true
+        mode: "0755"
+
+    - name: Ensure autorestic is executable
+      ansible.builtin.file:
+        path: /usr/local/bin/autorestic
+        mode: "0755"
+        state: file
+
+    - name: Clean up downloaded autorestic archive and binary
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/autorestic.bz2"
+        - "/tmp/autorestic"
+      when: autorestic_version is defined
+
+    - name: Verify autorestic installation and print version
+      ansible.builtin.command: /usr/local/bin/autorestic --version
+      register: autorestic_version_output
+      changed_when: false
+
+    - name: Debug autorestic version
+      ansible.builtin.debug:
+        var: autorestic_version_output.stdout

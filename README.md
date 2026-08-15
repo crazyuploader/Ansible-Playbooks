@@ -94,6 +94,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install Restic](install/install-restic.yml)**:
   This playbook installs Restic, a program that allows you to backup your files.
 
+- **[Install Autorestic](install/install-autorestic.yml)**:
+  This playbook installs Autorestic, a wrapper around Restic that simplifies configuring and running backups.
+
 - **[Install Sendme](install/install-sendme.yml)**:
   This playbook installs [Sendme](https://www.iroh.computer/sendme), a peer-to-peer file transfer tool built on iroh. Pin a version with `-e sendme_version=v0.36.0` to skip the GitHub API call.
 
