@@ -30,8 +30,11 @@ jobs:
       - name: Run Ansible Playbook Syntax Check
         run: |
           find . -name "*.yml" \
+            -not -path "./.ansible/*" \
             -not -path "./.github/workflows/*" \
             -not -path "**/vars/*.yml" \
             -not -path "**/tasks/*.yml" \
+            -not -path "**/host_vars/*.yml" \
+            -not -path "**/group_vars/*.yml" \
             -not -name "requirements.yml" \
             -print0 | xargs -0 -I {} ansible-playbook --syntax-check {}
