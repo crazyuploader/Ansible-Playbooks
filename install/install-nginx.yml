@@ -44,16 +44,24 @@
         creates: /usr/share/keyrings/nginx-archive-keyring.gpg
 
     - name: Add nginx.org APT repository (Debian)
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/debian {{ ansible_lsb.codename }} nginx"
-        filename: nginx
+      ansible.builtin.deb822_repository:
+        name: nginx
+        types: deb
+        uris: http://nginx.org/packages/debian
+        suites: "{{ ansible_lsb.codename }}"
+        components: nginx
+        signed_by: /usr/share/keyrings/nginx-archive-keyring.gpg
         state: present
       when: ansible_facts['os_family'] == "Debian" and ansible_facts['distribution'] == "Debian"
 
     - name: Add nginx.org APT repository (Ubuntu)
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/ubuntu {{ ansible_lsb.codename }} nginx"
-        filename: nginx
+      ansible.builtin.deb822_repository:
+        name: nginx
+        types: deb
+        uris: http://nginx.org/packages/ubuntu
+        suites: "{{ ansible_lsb.codename }}"
+        components: nginx
+        signed_by: /usr/share/keyrings/nginx-archive-keyring.gpg
         state: present
       when: ansible_facts['os_family'] == "Debian" and ansible_facts['distribution'] == "Ubuntu"
 

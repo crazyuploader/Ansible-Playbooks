@@ -25,12 +25,14 @@
         msg: "Detected architecture: {{ dpkg_architecture.stdout }}"
 
     - name: Add GoAccess APT repository
-      ansible.builtin.apt_repository:
-        repo: >-
-          deb [signed-by=/usr/share/keyrings/goaccess.gpg
-          arch={{ dpkg_architecture.stdout }}]
-          https://deb.goaccess.io/ {{ ansible_lsb.codename }} main
-        filename: goaccess
+      ansible.builtin.deb822_repository:
+        name: goaccess
+        types: deb
+        uris: https://deb.goaccess.io/
+        suites: "{{ ansible_lsb.codename }}"
+        components: main
+        architectures: "{{ dpkg_architecture.stdout }}"
+        signed_by: /usr/share/keyrings/goaccess.gpg
         state: present
 
     - name: Update APT cache
