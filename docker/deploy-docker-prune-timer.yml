@@ -6,6 +6,15 @@
     docker_prune_oncalendar: "*-*-* 01:30:00"
     docker_prune_volumes: false
   tasks:
+    - name: Check whether the Docker binary is present
+      ansible.builtin.stat:
+        path: /usr/bin/docker
+      register: docker_binary
+
+    - name: Skip hosts without Docker installed
+      ansible.builtin.meta: end_host
+      when: not docker_binary.stat.exists
+
     - name: Ensure Docker prune service unit file is present
       ansible.builtin.copy:
         dest: /etc/systemd/system/docker-prune.service
