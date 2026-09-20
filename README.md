@@ -45,7 +45,7 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
   This playbook runs `docker system prune -f` to remove unused Docker data, including stopped containers, networks, images, and the build cache, thus freeing up disk space.
 
 - **[Deploy Docker Prune Timer](docker/deploy-docker-prune-timer.yml)**:
-  This playbook creates a Systemd Service/Timer for weekly pruning of unused Docker objects, ensuring that your Docker environment remains clean.
+  This playbook creates a Systemd Service/Timer that prunes unused Docker objects nightly at 01:30. Override `docker_prune_oncalendar` to change the schedule, or set `docker_prune_volumes: true` to also prune unused volumes.
 
 - **[Install Docker & Docker Compose](docker/install.yml)**:
   This playbook installs Docker and Docker Compose, providing a robust platform for containerized applications.

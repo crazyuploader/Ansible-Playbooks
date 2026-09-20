@@ -3,3 +3,4 @@ backup/vars/*.yml
 !backup/vars/example_vars.yml
 .venv
 host_vars/
+.kilo

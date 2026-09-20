@@ -2,6 +2,9 @@
 - name: Deploy Systemd Timer for Docker Prune
   hosts: all
   become: true
+  vars:
+    docker_prune_oncalendar: "*-*-* 01:30:00"
+    docker_prune_volumes: false
   tasks:
     - name: Ensure Docker prune service unit file is present
       ansible.builtin.copy:
@@ -10,10 +13,12 @@
         content: |
           [Unit]
           Description=Prune unused Docker objects
+          After=docker.service
+          Requires=docker.service
 
           [Service]
           Type=oneshot
-          ExecStart=/usr/bin/docker system prune --all --force --volumes
+          ExecStart=/usr/bin/docker system prune --all --force{{ ' --volumes' if docker_prune_volumes | bool else '' }}
 
       notify: Reload systemd
 
@@ -23,25 +28,28 @@
         mode: "0644"
         content: |
           [Unit]
-          Description=Weekly Docker system prune
+          Description=Nightly Docker system prune
 
           [Timer]
-          OnCalendar=daily
+          OnCalendar={{ docker_prune_oncalendar }}
           Persistent=true
+          RandomizedDelaySec=300
 
           [Install]
           WantedBy=timers.target
 
       notify: Reload systemd
 
-    - name: Enable and start the Docker prune timer
+    - name: Reload systemd before enabling the timer
+      ansible.builtin.meta: flush_handlers
+
+    - name: Enable and restart the Docker prune timer
       ansible.builtin.systemd:
         name: docker-prune.timer
         enabled: true
-        state: started
+        state: restarted
 
   handlers:
     - name: Reload systemd
       ansible.builtin.systemd:
         daemon_reload: true
-      become: true
