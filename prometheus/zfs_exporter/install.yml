@@ -117,12 +117,11 @@
             --web.listen-address={{ zfs_exporter_listen_address }} \
             --collector.dataset-filesystem \
             --collector.dataset-volume \
-            --collector.dataset-snapshot \
+            --no-collector.dataset-snapshot \
             --web.disable-exporter-metrics \
             --properties.pool="allocated,dedupratio,fragmentation,free,freeing,health,leaked,readonly,size" \
             --properties.dataset-filesystem="available,logicalused,quota,referenced,used,usedbydataset,written" \
             --properties.dataset-volume="available,logicalused,referenced,used,usedbydataset,volsize,written" \
-            --properties.dataset-snapshot="logicalused,referenced,used,written" \
             --deadline=8s \
             --log.format=json
           Restart=on-failure
