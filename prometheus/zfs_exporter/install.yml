@@ -122,7 +122,7 @@
             --properties.pool="allocated,dedupratio,fragmentation,free,freeing,health,leaked,readonly,size" \
             --properties.dataset-filesystem="available,logicalused,quota,referenced,used,usedbydataset,written" \
             --properties.dataset-volume="available,logicalused,referenced,used,usedbydataset,volsize,written" \
-            --deadline=8s \
+            --deadline=5s \
             --log.format=json
           Restart=on-failure
           RestartSec=5
