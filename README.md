@@ -133,6 +133,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Server Inventory Report](reporting/server_inventory.yml)**:
   This playbook collects and displays a comprehensive inventory report of your servers, including OS, virtualization type, architecture, CPU cores, RAM, disk size, and uptime.
 
+- **[SMART Logs to GitHub](reporting/smartctl_logs/install.yml)**:
+  This playbook installs a daily root cron job that writes `smartctl -x` output (plus `nvme` logs for NVMe disks) for each disk in `host_vars/<host>.yml` to `<host>/<name>.txt` in a GitHub repository, then commits and pushes it. Each host uses its own deploy key. See [host_vars.example.yml](reporting/smartctl_logs/host_vars.example.yml).
+
 ### Speedtest
 
 - **[Install Speedtest](speedtest/install.yml)**:

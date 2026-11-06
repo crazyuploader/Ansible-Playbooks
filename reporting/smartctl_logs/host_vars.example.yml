@@ -1,0 +1,9 @@
+# Copy to host_vars/<inventory host>.yml. name is the file name in the repo,
+# device a /dev/disk/by-id path, type the smartctl -d type (sat, nvme, auto).
+smartctl_logs_devices:
+  - name: samsung-2tb
+    device: /dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_2TB_S4J4NM0W707214A
+    type: nvme
+  - name: seagate-2tb
+    device: /dev/disk/by-id/ata-ST2000LM007-1R8174_WDZY9CQN
+    type: sat

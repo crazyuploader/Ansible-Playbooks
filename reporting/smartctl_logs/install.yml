@@ -1,0 +1,96 @@
+---
+# Pushes a daily SMART report of each disk to the private repo
+# crazyuploader/smartctl-logs, as <host>/<name>.txt. Disks come from
+# host_vars/<host>.yml (see host_vars.example.yml). Hosts without
+# smartctl_logs_devices are skipped.
+- name: Set up daily SMART reports to GitHub
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    smartctl_logs_repo: git@github.com:crazyuploader/smartctl-logs.git
+    smartctl_logs_branch: main
+    smartctl_logs_repo_dir: /var/lib/smartctl-logs/repo
+    smartctl_logs_key: /root/.ssh/smartctl-logs_ed25519
+    smartctl_logs_host_dir: "{{ inventory_hostname }}"
+    smartctl_logs_cron_hour: "4"
+    # Spread the hosts over the hour, stable per host.
+    smartctl_logs_cron_minute: "{{ 59 | random(seed=inventory_hostname) }}"
+    smartctl_logs_run_now: true
+    smartctl_logs_types: "{{ smartctl_logs_devices | default([]) | map(attribute='type', default='auto') | list }}"
+
+  tasks:
+    - name: Skip hosts without a disk list
+      ansible.builtin.meta: end_host
+      when: smartctl_logs_devices | default([]) | length == 0
+
+    - name: Install packages
+      ansible.builtin.package:
+        name: "{{ ['git', 'smartmontools'] + (['nvme-cli'] if 'nvme' in smartctl_logs_types else []) }}"
+        state: present
+
+    - name: Create the deploy key
+      ansible.builtin.command:
+        cmd: ssh-keygen -q -t ed25519 -N "" -C "smartctl-logs@{{ inventory_hostname }}" -f {{ smartctl_logs_key }}
+        creates: "{{ smartctl_logs_key }}"
+
+    - name: Create the work directory
+      ansible.builtin.file:
+        path: "{{ smartctl_logs_repo_dir | dirname }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Install the script
+      ansible.builtin.template:
+        src: templates/smartctl-logs.sh.j2
+        dest: /usr/local/bin/smartctl-logs
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install the cron job
+      ansible.builtin.cron:
+        name: smartctl-logs
+        user: root
+        hour: "{{ smartctl_logs_cron_hour }}"
+        minute: "{{ smartctl_logs_cron_minute }}"
+        job: /usr/local/bin/smartctl-logs 2>&1 | logger -t smartctl-logs
+
+    - name: Check that GitHub accepts the deploy key
+      ansible.builtin.command:
+        cmd: ssh -i {{ smartctl_logs_key }} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -T git@github.com
+      register: smartctl_logs_auth
+      changed_when: false
+      failed_when: false
+
+    - name: Read the public key
+      ansible.builtin.slurp:
+        src: "{{ smartctl_logs_key }}.pub"
+      register: smartctl_logs_pub
+      when: "'successfully authenticated' not in smartctl_logs_auth.stderr"
+
+    - name: Show the key to add
+      ansible.builtin.debug:
+        msg:
+          - "GitHub does not accept the key yet. Add it as a deploy key with write access:"
+          - "https://github.com/crazyuploader/smartctl-logs/settings/keys/new"
+          - "Title: {{ inventory_hostname }}"
+          - "{{ smartctl_logs_pub.content | b64decode | trim }}"
+          - "Then run this playbook again, or run /usr/local/bin/smartctl-logs on the host."
+      when: "'successfully authenticated' not in smartctl_logs_auth.stderr"
+
+    - name: Run once now
+      ansible.builtin.command: /usr/local/bin/smartctl-logs
+      register: smartctl_logs_run
+      changed_when: "'pushed' in smartctl_logs_run.stdout"
+      when:
+        - smartctl_logs_run_now | bool
+        - "'successfully authenticated' in smartctl_logs_auth.stderr"
+
+    - name: Show the run output
+      ansible.builtin.debug:
+        var: smartctl_logs_run.stdout_lines
+      when: smartctl_logs_run is not skipped

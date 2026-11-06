@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Writes a SMART report of each disk to {{ smartctl_logs_host_dir }}/<name>.txt
+# in {{ smartctl_logs_repo }}, then commits and pushes it.
+set -euo pipefail
+
+REPO_URL={{ smartctl_logs_repo | quote }}
+BRANCH={{ smartctl_logs_branch | quote }}
+REPO_DIR={{ smartctl_logs_repo_dir | quote }}
+HOST_DIR={{ smartctl_logs_host_dir | quote }}
+export GIT_SSH_COMMAND="ssh -i {{ smartctl_logs_key }} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes"
+
+exec 9>/run/lock/smartctl-logs.lock
+flock -n 9 || { echo "another run is active"; exit 0; }
+
+# REPO_DIR is a checkout that only this script uses, so a hard reset is safe.
+if [ ! -d "$REPO_DIR/.git" ]; then
+  git clone --quiet --branch "$BRANCH" "$REPO_URL" "$REPO_DIR"
+fi
+cd "$REPO_DIR"
+git fetch --quiet origin "$BRANCH"
+git reset --quiet --hard "origin/$BRANCH"
+mkdir -p "$HOST_DIR"
+
+# Print the command, then its output. smartctl uses non-zero exit bits for
+# warnings, so a non-zero exit is recorded, not fatal.
+run() {
+  echo "# $*"
+  "$@" 2>&1 || echo "# exit code $?"
+  echo
+}
+
+report() {
+  local name=$1 dev=$2 type=$3 real out
+  out="$HOST_DIR/$name.txt"
+  real=$(readlink -f "$dev")
+  if [ ! -b "$real" ]; then
+    echo "$name: $dev not found, kept the last report"
+    return 1
+  fi
+  {
+    echo "# $(hostname) $(date -Is)"
+    echo "# $dev -> $real"
+    echo
+    run smartctl -x -d "$type" "$dev"
+    if [ "$type" = nvme ]; then
+      run nvme error-log "$real"
+      run nvme smart-log "$real"
+      run nvme id-ctrl "$real"
+    fi
+  } >"$out.tmp"
+  mv "$out.tmp" "$out"
+  echo "$name: $dev ok"
+}
+
+failed=0
+{% for d in smartctl_logs_devices %}
+report {{ d.name | quote }} {{ d.device | quote }} {{ d.type | default('auto') | quote }} || failed=1
+{% endfor %}
+
+git add -A "$HOST_DIR"
+if git diff --cached --quiet; then
+  echo "no changes"
+  exit "$failed"
+fi
+git -c user.name="smartctl-logs ({{ inventory_hostname }})" \
+  -c user.email="{{ inventory_hostname }}@smartctl-logs.invalid" \
+  commit --quiet -m "{{ inventory_hostname }}: SMART report $(date +%F)"
+
+# Each host writes only its own directory, so a rebase never conflicts.
+for i in 1 2 3; do
+  if git push --quiet origin "HEAD:$BRANCH"; then
+    echo "pushed"
+    exit "$failed"
+  fi
+  sleep $((i * 30))
+  git pull --quiet --rebase origin "$BRANCH"
+done
+echo "push failed"
+exit 1

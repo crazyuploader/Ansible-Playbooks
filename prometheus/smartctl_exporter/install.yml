@@ -1,6 +1,6 @@
 ---
 - name: Install Smartctl Exporter
-  hosts: PVE, PVE01, PVE02
+  hosts: PVE, PVE01, PVE02, deb-cel-01
   become: true
 
   pre_tasks:
