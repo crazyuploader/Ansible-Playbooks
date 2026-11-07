@@ -11,10 +11,8 @@
   vars:
     log2ram_version: "1.7.2"
     log2ram_sha256: d8094f4c1e11e8efa2403128b4c47fa4cc2bf820c5222ee21c4eecf63471e5ad
-    # RAM limit, and the uncompressed size of the zram disk.
-    log2ram_size: 128M
-    log2ram_disk_size: 256M
-    log2ram_start_now: false
+    # log2ram_size, log2ram_disk_size and log2ram_start_now are in
+    # group_vars/all.yml, so host_vars can change them.
 
   pre_tasks:
     - name: Require an explicit --limit
