@@ -7,6 +7,8 @@
 - name: Forward logs to the central server
   hosts: all
   become: true
+  # Run a pending rsyslog restart even when a later task fails.
+  force_handlers: true
 
   # Per-host settings and their defaults are in group_vars/all.yml, because
   # play vars would override host_vars.
@@ -66,6 +68,12 @@
       ansible.builtin.systemd_service:
         name: rsyslog
         enabled: true
+
+    - name: Create the journald drop-in directory
+      ansible.builtin.file:
+        path: /etc/systemd/journald.conf.d
+        state: directory
+        mode: "0755"
 
     - name: Install the journald configuration
       ansible.builtin.template:

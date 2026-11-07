@@ -2,11 +2,23 @@
 # Runs on the PVE host for one container. log2ram does not work in an
 # unprivileged container, so a container gets the journald and rsyslog parts only.
 # The containers have no Tailscale, so they send to the relay on the PVE host.
+- name: Check that systemd runs in CT {{ lxc_id }}
+  ansible.builtin.command: pct exec {{ lxc_id }} -- test -d /run/systemd/system
+  register: lxc_systemd
+  changed_when: false
+  failed_when: false
+
+- name: Skip a container without systemd, such as Alpine with BusyBox syslogd ({{ lxc_id }})
+  ansible.builtin.debug:
+    msg: "CT {{ lxc_id }} has no systemd. Skipped. Remove it from logging_lxc_ids."
+  when: lxc_systemd.rc != 0
+
 - name: Render the container configuration on the host for CT {{ lxc_id }}
   ansible.builtin.template:
     src: "templates/{{ item.src }}"
     dest: "/tmp/central-logging-{{ lxc_id }}-{{ item.src | regex_replace('\\.j2$', '') }}"
     mode: "0644"
+  when: lxc_systemd.rc == 0
   loop:
     - src: rsyslog-client.conf.j2
     - src: journald-central.conf.j2
@@ -31,3 +43,4 @@
   args:
     executable: /bin/bash
   changed_when: true
+  when: lxc_systemd.rc == 0

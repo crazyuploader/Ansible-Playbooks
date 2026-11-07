@@ -1,6 +1,7 @@
 # Copy to host_vars/<inventory host>.yml next to the playbooks.
 # On a PVE host: the LXC containers that rsyslog_client.yml configures with pct.
-logging_lxc_ids: [302, 305, 306, 307, 308]
+# Only containers with systemd. Alpine (BusyBox syslogd, UDP only) is skipped.
+logging_lxc_ids: [306, 307, 308]
 # Set to false if the node is in a cluster or has HA resources.
 logging_pve_mask_ha: true
 # The PVE host relays the container logs. Listen on its LAN address only.
