@@ -1,0 +1,138 @@
+---
+# Sends all logs to the central rsyslog server and stops log writes to disk:
+# journald keeps its journal in RAM, rsyslog forwards everything and writes
+# no local files. On a PVE host it also masks the HA services (standalone
+# nodes only) and configures the LXC containers in logging_lxc_ids.
+# Run: ansible-playbook logging/rsyslog_client.yml --limit <host>
+- name: Forward logs to the central server
+  hosts: all
+  become: true
+
+  # Per-host settings and their defaults are in group_vars/all.yml, because
+  # play vars would override host_vars.
+  vars:
+    logging_server: 100.64.0.5
+    logging_port: 514
+    logging_journal_runtime_max: 64M
+    logging_queue_size: 50000
+    logging_queue_max_disk: 256m
+    # Old persistent journals move here, so log2ram fits. Delete them by hand later.
+    logging_journal_archive: /var/lib/journal-archive
+
+  pre_tasks:
+    - name: Require an explicit --limit
+      ansible.builtin.assert:
+        that: ansible_limit is defined
+        fail_msg: "Run with --limit <host>."
+
+  tasks:
+    - name: Install rsyslog
+      ansible.builtin.package:
+        name: rsyslog
+        state: present
+
+    - name: Install the forwarding configuration
+      ansible.builtin.template:
+        src: templates/rsyslog-client.conf.j2
+        dest: /etc/rsyslog.d/00-central-forward.conf
+        mode: "0644"
+      notify: Restart rsyslog
+
+    - name: Create the rsyslog drop-in directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/rsyslog.service.d
+        state: directory
+        mode: "0755"
+      when: logging_wait_for_tailscale | bool
+
+    - name: Make rsyslog wait for Tailscale at boot
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/rsyslog.service.d/10-wait-tailscale.conf
+        mode: "0644"
+        content: |
+          # Managed by Ansible-Playbooks/logging/rsyslog_client.yml
+          # Wait up to 30 s for the Tailscale address, so the first connection to the
+          # log server does not use the LAN source address. Starts anyway after 30 s.
+          [Service]
+          ExecStartPre=/bin/sh -c 'for i in $(seq 30); do ip -4 -o addr show dev tailscale0 2>/dev/null | grep -q inet && exit 0; sleep 1; done; exit 0'
+      when: logging_wait_for_tailscale | bool
+      notify: Restart rsyslog
+
+    - name: Check the rsyslog configuration
+      ansible.builtin.command: rsyslogd -N1
+      changed_when: false
+
+    - name: Enable rsyslog
+      ansible.builtin.systemd_service:
+        name: rsyslog
+        enabled: true
+
+    - name: Install the journald configuration
+      ansible.builtin.template:
+        src: templates/journald-central.conf.j2
+        dest: /etc/systemd/journald.conf.d/90-central-logging.conf
+        mode: "0644"
+      notify: Restart journald
+
+    - name: Apply the rsyslog and journald changes before the journal moves
+      ansible.builtin.meta: flush_handlers
+
+    - name: Find an old persistent journal
+      ansible.builtin.stat:
+        path: /var/log/journal
+      register: persistent_journal
+
+    - name: Move the old persistent journal out of /var/log
+      ansible.builtin.command:
+        cmd: mv /var/log/journal {{ logging_journal_archive }}-{{ now(fmt='%Y-%m-%d') }}
+        creates: "{{ logging_journal_archive }}-{{ now(fmt='%Y-%m-%d') }}"
+      when: persistent_journal.stat.exists
+
+    - name: Send a test message
+      ansible.builtin.command: logger -t central-logging-test "test from {{ inventory_hostname }}"
+      changed_when: false
+
+    - name: PVE host
+      block:
+        - name: Check for PVE
+          ansible.builtin.stat:
+            path: /usr/bin/pveversion
+          register: pve_check
+
+        - name: Read the HA configuration
+          ansible.builtin.command: ha-manager config
+          register: ha_config
+          changed_when: false
+          when: pve_check.stat.exists and logging_pve_mask_ha
+
+        - name: Refuse to mask HA while HA resources exist
+          ansible.builtin.assert:
+            that: ha_config.stdout | trim | length == 0
+            fail_msg: "HA resources exist on {{ inventory_hostname }}. Set logging_pve_mask_ha: false."
+          when: pve_check.stat.exists and logging_pve_mask_ha
+
+        - name: Stop and mask the HA services (standalone node)
+          ansible.builtin.systemd_service:
+            name: "{{ item }}"
+            state: stopped
+            masked: true
+          loop: [pve-ha-lrm, pve-ha-crm]
+          when: pve_check.stat.exists and logging_pve_mask_ha
+
+    - name: Configure the LXC containers
+      ansible.builtin.include_tasks: tasks/lxc_client.yml
+      loop: "{{ logging_lxc_ids }}"
+      loop_control:
+        loop_var: lxc_id
+
+  handlers:
+    - name: Restart rsyslog
+      ansible.builtin.systemd_service:
+        name: rsyslog
+        state: restarted
+        daemon_reload: true
+
+    - name: Restart journald
+      ansible.builtin.systemd_service:
+        name: systemd-journald
+        state: restarted

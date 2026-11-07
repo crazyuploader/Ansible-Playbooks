@@ -1,0 +1,10 @@
+---
+# Defaults for rsyslog_client.yml that a host can change in host_vars/<host>.yml.
+logging_pve_mask_ha: true
+logging_lxc_ids: []
+# rsyslog waits for tailscale0 at boot. Without the wait, its first connection
+# uses the LAN source address, Tailscale drops it, and logs stall for ~2 minutes.
+logging_wait_for_tailscale: "{{ ansible_host is match('100\\.64\\.') }}"
+# Set on a PVE host with containers: it relays their logs.
+logging_relay_listen: ""
+logging_relay_allowed: ""

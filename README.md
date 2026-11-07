@@ -103,6 +103,17 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install Zoxide](install/install-zoxide.yml)**:
   This playbook installs Zoxide, a command-line tool that provides a fuzzy finder for directories.
 
+### Logging
+
+- **[Central rsyslog Server](logging/rsyslog_server.yml)**:
+  This playbook makes a host receive syslog over TCP 514 from Tailscale addresses only, and write it to `/var/log/remote/<host>/<program>.log`. Files rotate daily and are kept 30 days. An hourly timer deletes the oldest archives when the directory or the disk gets too full.
+
+- **[Forward Logs to the Central Server](logging/rsyslog_client.yml)**:
+  This playbook keeps the journal in RAM (`Storage=volatile`) and makes rsyslog forward every message to the central server, with no local log files. On a PVE host it masks `pve-ha-lrm` and `pve-ha-crm` (standalone nodes only) and configures the LXC containers listed in `logging_lxc_ids` through `pct`. See [host_vars.example.yml](logging/host_vars.example.yml).
+
+- **[Install log2ram](logging/log2ram.yml)**:
+  This playbook installs log2ram 1.7.2 (pinned by checksum). `/var/log` lives in a zram disk and is written to disk once a day and at shutdown. Run the forwarding playbook first, so the old journal is out of `/var/log`. LXC containers are skipped.
+
 ### NTP
 
 - **[NTP - Setup Time Synchronization](ntp/install-and-configure.yml)**:

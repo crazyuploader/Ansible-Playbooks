@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+{% if logging_relay_listen and logging_render_relay | default(true) %}
+# Relay for the LXC containers, which have no Tailscale. Only {{ logging_relay_allowed }} may send.
+$AllowedSender TCP, 127.0.0.1, {{ logging_relay_allowed }}
+module(load="imtcp")
+input(type="imtcp" address="{{ logging_relay_listen }}" port="{{ logging_port }}")
+
+{% endif %}
+# Forwards every message to {{ logging_server }} over TCP, then stops, so no
+# local log file is written. The queue is in RAM. It spills to
+# /var/spool/rsyslog only when the server is away for a long time.
+*.* action(type="omfwd" target="{{ logging_server }}" port="{{ logging_port }}" protocol="tcp"
+           template="RSYSLOG_ForwardFormat"
+           queue.type="LinkedList" queue.size="{{ logging_queue_size }}"
+           queue.filename="central-forward" queue.maxDiskSpace="{{ logging_queue_max_disk }}"
+           queue.saveOnShutdown="on"
+           action.resumeRetryCount="-1" action.resumeInterval="10")
+& stop

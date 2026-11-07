@@ -1,0 +1,101 @@
+---
+# Central log server: receives syslog over TCP from the self-hosted hosts
+# (Tailscale only) and writes /var/log/remote/<host>/<program>.log.
+# Run: ansible-playbook logging/rsyslog_server.yml --limit Server05
+- name: Set up the central rsyslog server
+  hosts: all
+  become: true
+
+  vars:
+    remote_logs_dir: /var/log/remote
+    remote_logs_port: 514
+    remote_logs_allowed_senders: "127.0.0.1, 100.64.0.0/10"
+    remote_logs_keep_days: 30
+    # The guard deletes the oldest archives above this size or below this free space.
+    remote_logs_max_mb: 5120
+    remote_logs_min_free_mb: 10240
+
+  pre_tasks:
+    - name: Require an explicit --limit
+      ansible.builtin.assert:
+        that: ansible_limit is defined
+        fail_msg: "Run with --limit <log server>."
+
+  tasks:
+    - name: Install rsyslog
+      ansible.builtin.package:
+        name: rsyslog
+        state: present
+
+    - name: Create the log directory
+      ansible.builtin.file:
+        path: "{{ remote_logs_dir }}"
+        state: directory
+        owner: syslog
+        group: adm
+        mode: "0750"
+
+    - name: Install the receiver configuration
+      ansible.builtin.template:
+        src: templates/rsyslog-server.conf.j2
+        dest: /etc/rsyslog.d/10-central-server.conf
+        mode: "0644"
+      notify: Restart rsyslog
+
+    - name: Check the rsyslog configuration
+      ansible.builtin.command: rsyslogd -N1
+      changed_when: false
+
+    - name: Install the logrotate rule
+      ansible.builtin.template:
+        src: templates/remote-logs.logrotate.j2
+        dest: /etc/logrotate.d/remote-logs
+        mode: "0644"
+
+    - name: Install the disk guard script
+      ansible.builtin.template:
+        src: templates/remote-logs-guard.sh.j2
+        dest: /usr/local/sbin/remote-logs-guard
+        mode: "0755"
+
+    - name: Install the disk guard units
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item.name }}"
+        content: "{{ item.content }}"
+        mode: "0644"
+      loop:
+        - name: remote-logs-guard.service
+          content: |
+            [Unit]
+            Description=Delete the oldest remote log archives when {{ remote_logs_dir }} is too large or the disk is low
+
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/sbin/remote-logs-guard
+        - name: remote-logs-guard.timer
+          content: |
+            [Unit]
+            Description=Run remote-logs-guard every hour
+
+            [Timer]
+            OnCalendar=hourly
+            Persistent=true
+
+            [Install]
+            WantedBy=timers.target
+      loop_control:
+        label: "{{ item.name }}"
+      register: guard_units
+
+    - name: Enable the disk guard timer
+      ansible.builtin.systemd_service:
+        name: remote-logs-guard.timer
+        enabled: true
+        state: started
+        daemon_reload: "{{ guard_units.changed }}"
+
+  handlers:
+    - name: Restart rsyslog
+      ansible.builtin.systemd_service:
+        name: rsyslog
+        state: restarted

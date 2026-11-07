@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+# Receives logs from the self-hosted hosts on TCP {{ remote_logs_port }}. Only the
+# senders below may connect. ufw does not open the port on the public interface.
+$AllowedSender TCP, {{ remote_logs_allowed_senders }}
+module(load="imtcp" MaxSessions="200")
+
+template(name="CentralRemoteFile" type="string"
+         string="{{ remote_logs_dir }}/%HOSTNAME:::lowercase,secpath-replace%/%PROGRAMNAME:::secpath-replace%.log")
+
+ruleset(name="central-remote") {
+  action(type="omfile" dynaFile="CentralRemoteFile" dynaFileCacheSize="500"
+         createDirs="on" dirCreateMode="0750" fileCreateMode="0640"
+         asyncWriting="on" ioBufferSize="64k" flushInterval="5")
+}
+
+input(type="imtcp" port="{{ remote_logs_port }}" ruleset="central-remote")

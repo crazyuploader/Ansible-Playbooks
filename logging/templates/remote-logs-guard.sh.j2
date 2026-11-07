@@ -1,0 +1,24 @@
+#!/bin/sh
+# {{ ansible_managed }}
+# Deletes the oldest compressed archives in {{ remote_logs_dir }} while the
+# directory is over {{ remote_logs_max_mb }} MB or the disk has less than
+# {{ remote_logs_min_free_mb }} MB free. It never deletes a live .log file.
+set -eu
+DIR={{ remote_logs_dir | quote }}
+MAX_MB={{ remote_logs_max_mb }}
+MIN_FREE_MB={{ remote_logs_min_free_mb }}
+
+while :; do
+  used=$(du -sm "$DIR" | cut -f1)
+  free=$(df -Pm "$DIR" | awk 'NR==2 {print $4}')
+  if [ "$used" -le "$MAX_MB" ] && [ "$free" -ge "$MIN_FREE_MB" ]; then
+    exit 0
+  fi
+  oldest=$(find "$DIR" -type f -name '*.gz' -printf '%T@ %p\n' | sort -n | head -n 1 | cut -d' ' -f2-)
+  if [ -z "$oldest" ]; then
+    echo "no archives left to delete: used=${used}MB free=${free}MB"
+    exit 1
+  fi
+  rm -f -- "$oldest"
+  echo "deleted $oldest (used=${used}MB free=${free}MB)"
+done

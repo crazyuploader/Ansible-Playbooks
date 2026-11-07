@@ -1,0 +1,89 @@
+---
+# Installs log2ram: /var/log lives in a zram disk and is written to the real
+# disk once a day and at shutdown. Run rsyslog_client.yml first, so the old
+# journal is out of /var/log. Skips LXC containers. log2ram starts at the
+# next reboot, unless log2ram_start_now is true.
+# Run: ansible-playbook logging/log2ram.yml --limit <host>
+- name: Install log2ram
+  hosts: all
+  become: true
+
+  vars:
+    log2ram_version: "1.7.2"
+    log2ram_sha256: d8094f4c1e11e8efa2403128b4c47fa4cc2bf820c5222ee21c4eecf63471e5ad
+    # RAM limit, and the uncompressed size of the zram disk.
+    log2ram_size: 128M
+    log2ram_disk_size: 256M
+    log2ram_start_now: false
+
+  pre_tasks:
+    - name: Require an explicit --limit
+      ansible.builtin.assert:
+        that: ansible_limit is defined
+        fail_msg: "Run with --limit <host>."
+
+    - name: Skip LXC containers
+      ansible.builtin.meta: end_host
+      when: ansible_virtualization_type == 'lxc'
+
+  tasks:
+    - name: Install rsync
+      ansible.builtin.package:
+        name: rsync
+        state: present
+
+    - name: Measure /var/log
+      ansible.builtin.command: du -sm /var/log
+      register: varlog_size
+      changed_when: false
+
+    - name: Make sure /var/log fits in log2ram
+      ansible.builtin.assert:
+        that: (varlog_size.stdout.split()[0] | int) < ((log2ram_size | human_to_bytes) / 1048576 * 0.7)
+        fail_msg: >-
+          /var/log is {{ varlog_size.stdout.split()[0] }} MB, too large for {{ log2ram_size }}.
+          Run rsyslog_client.yml first, or delete old rotated logs.
+
+    - name: Download log2ram
+      ansible.builtin.get_url:
+        url: "https://github.com/azlux/log2ram/archive/refs/tags/{{ log2ram_version }}.tar.gz"
+        dest: "/opt/log2ram-{{ log2ram_version }}.tar.gz"
+        checksum: "sha256:{{ log2ram_sha256 }}"
+        mode: "0644"
+
+    - name: Unpack log2ram
+      ansible.builtin.unarchive:
+        src: "/opt/log2ram-{{ log2ram_version }}.tar.gz"
+        dest: /opt
+        remote_src: true
+        creates: "/opt/log2ram-{{ log2ram_version }}/install.sh"
+
+    - name: Write the configuration
+      ansible.builtin.copy:
+        dest: /etc/log2ram.conf
+        mode: "0644"
+        content: |
+          # Managed by Ansible-Playbooks/logging/log2ram.yml
+          SIZE={{ log2ram_size }}
+          PATH_DISK="/var/log"
+          JOURNALD_AWARE=true
+          ZL2R=true
+          COMP_ALG=lz4
+          LOG_DISK_SIZE={{ log2ram_disk_size }}
+
+    - name: Run the installer
+      ansible.builtin.command:
+        cmd: ./install.sh
+        chdir: "/opt/log2ram-{{ log2ram_version }}"
+        creates: /usr/local/bin/log2ram
+
+    - name: Start log2ram now
+      ansible.builtin.systemd_service:
+        name: log2ram
+        state: started
+      when: log2ram_start_now | bool
+
+    - name: Show the next step
+      ansible.builtin.debug:
+        msg: "log2ram is installed and enabled. It mounts /var/log at the next reboot."
+      when: not (log2ram_start_now | bool)

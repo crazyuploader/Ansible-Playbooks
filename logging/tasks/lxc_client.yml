@@ -1,0 +1,33 @@
+---
+# Runs on the PVE host for one container. log2ram does not work in an
+# unprivileged container, so a container gets the journald and rsyslog parts only.
+# The containers have no Tailscale, so they send to the relay on the PVE host.
+- name: Render the container configuration on the host for CT {{ lxc_id }}
+  ansible.builtin.template:
+    src: "templates/{{ item.src }}"
+    dest: "/tmp/central-logging-{{ lxc_id }}-{{ item.src | regex_replace('\\.j2$', '') }}"
+    mode: "0644"
+  loop:
+    - src: rsyslog-client.conf.j2
+    - src: journald-central.conf.j2
+  vars:
+    # The container sends to the relay on its PVE host, from its LAN address.
+    logging_server: "{{ logging_relay_listen }}"
+    logging_render_relay: false
+
+- name: Install rsyslog and the configuration in CT {{ lxc_id }}
+  ansible.builtin.shell: |
+    set -e
+    pct exec {{ lxc_id }} -- sh -c 'command -v rsyslogd >/dev/null || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rsyslog)'
+    pct exec {{ lxc_id }} -- mkdir -p /etc/systemd/journald.conf.d
+    pct push {{ lxc_id }} /tmp/central-logging-{{ lxc_id }}-rsyslog-client.conf /etc/rsyslog.d/00-central-forward.conf --perms 0644
+    pct push {{ lxc_id }} /tmp/central-logging-{{ lxc_id }}-journald-central.conf /etc/systemd/journald.conf.d/90-central-logging.conf --perms 0644
+    pct exec {{ lxc_id }} -- rsyslogd -N1
+    pct exec {{ lxc_id }} -- systemctl enable rsyslog
+    pct exec {{ lxc_id }} -- systemctl restart rsyslog systemd-journald
+    pct exec {{ lxc_id }} -- sh -c 'if [ -d /var/log/journal ]; then mv /var/log/journal {{ logging_journal_archive }}-{{ now(fmt='%Y-%m-%d') }}; fi'
+    pct exec {{ lxc_id }} -- logger -t central-logging-test "test from CT {{ lxc_id }}"
+    rm -f /tmp/central-logging-{{ lxc_id }}-*
+  args:
+    executable: /bin/bash
+  changed_when: true

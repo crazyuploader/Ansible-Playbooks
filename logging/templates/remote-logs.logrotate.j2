@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+{{ remote_logs_dir }}/*/*.log {
+    daily
+    rotate {{ remote_logs_keep_days }}
+    missingok
+    notifempty
+    compress
+    delaycompress
+    dateext
+    sharedscripts
+    postrotate
+        /usr/lib/rsyslog/rsyslog-rotate
+    endscript
+}

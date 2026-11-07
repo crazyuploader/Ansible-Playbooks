@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+# Keep the journal in RAM only. rsyslog sends the messages to the central server.
+[Journal]
+Storage=volatile
+RuntimeMaxUse={{ logging_journal_runtime_max }}
+{% if ansible_os_family != 'RedHat' %}
+ForwardToSyslog=yes
+{% endif %}
