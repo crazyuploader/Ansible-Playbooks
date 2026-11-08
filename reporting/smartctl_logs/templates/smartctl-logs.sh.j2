@@ -4,6 +4,14 @@
 # in {{ smartctl_logs_repo }}, then commits and pushes it.
 set -euo pipefail
 
+# cron runs with PATH=/usr/bin:/bin, and smartctl and nvme are in /usr/sbin.
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# A missing tool would replace every good report with "command not found".
+for tool in git smartctl{% if smartctl_logs_devices | selectattr('type', 'defined') | selectattr('type', 'equalto', 'nvme') | list %} nvme{% endif %}; do
+  command -v "$tool" >/dev/null || { echo "$tool not found, no report written"; exit 1; }
+done
+
 REPO_URL={{ smartctl_logs_repo | quote }}
 BRANCH={{ smartctl_logs_branch | quote }}
 REPO_DIR={{ smartctl_logs_repo_dir | quote }}
