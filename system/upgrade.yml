@@ -1,0 +1,132 @@
+---
+# Cross-distro full system upgrade (Debian/Ubuntu, Fedora/RHEL family, SUSE, Arch, Alpine).
+#
+# Usage:
+#   ansible-playbook system/upgrade.yml                      # upgrade only
+#   ansible-playbook system/upgrade.yml -e auto_reboot=true  # reboot if required
+#   ansible-playbook system/upgrade.yml -l fedora --check    # dry run on one group
+#
+# auto_reboot defaults to false. Opt a host or group in with
+# `auto_reboot: true` in host_vars/group_vars. `-e auto_reboot=...` overrides all.
+- name: Upgrade all packages on all servers
+  hosts: Servers
+  become: true
+  gather_facts: true
+  # One host at a time per batch so one bad upgrade does not hit the whole fleet.
+  serial: "{{ upgrade_serial | default(1) }}"
+
+  vars:
+    reboot_timeout: 900
+
+  tasks:
+    - name: Debian family upgrade
+      when: ansible_facts['os_family'] == 'Debian'
+      block:
+        - name: Update apt cache and dist-upgrade
+          ansible.builtin.apt:
+            update_cache: true
+            cache_valid_time: 0
+            upgrade: dist
+            autoclean: true
+            autoremove: true
+            lock_timeout: 300
+          register: upgrade_result
+
+        - name: Check for reboot-required flag
+          ansible.builtin.stat:
+            path: /var/run/reboot-required
+          register: debian_reboot_flag
+
+        - name: Set reboot_needed (Debian)
+          ansible.builtin.set_fact:
+            reboot_needed: "{{ debian_reboot_flag.stat.exists }}"
+
+    - name: RedHat family upgrade (Fedora, RHEL, Alma, Rocky, CentOS)
+      when: ansible_facts['os_family'] == 'RedHat'
+      block:
+        - name: Upgrade all packages with dnf
+          ansible.builtin.dnf:
+            name: "*"
+            state: latest # noqa package-latest
+            update_cache: true
+            lock_timeout: 300
+          register: upgrade_result
+
+        - name: Remove unneeded dependencies
+          ansible.builtin.dnf:
+            autoremove: true
+            lock_timeout: 300
+          register: autoremove_result
+
+        - name: Ensure needs-restarting is available
+          ansible.builtin.dnf:
+            name: dnf-utils
+            state: present
+
+        - name: Check if reboot is required
+          ansible.builtin.command: needs-restarting -r
+          register: rh_reboot_check
+          changed_when: false
+          check_mode: false
+          # dnf-utils may be missing in check mode (install is simulated).
+          failed_when:
+            - rh_reboot_check.rc not in [0, 1]
+            - not ansible_check_mode
+
+        - name: Set reboot_needed (RedHat)
+          ansible.builtin.set_fact:
+            reboot_needed: "{{ rh_reboot_check.rc == 1 }}"
+
+    - name: SUSE family upgrade
+      when: ansible_facts['os_family'] == 'Suse'
+      block:
+        - name: Upgrade all packages with zypper
+          community.general.zypper:
+            name: "*"
+            state: latest # noqa package-latest
+            update_cache: true
+          register: upgrade_result
+
+        - name: Check if reboot is required
+          ansible.builtin.command: zypper needs-rebooting
+          register: suse_reboot_check
+          changed_when: false
+          check_mode: false
+          failed_when: suse_reboot_check.rc not in [0, 102]
+
+        - name: Set reboot_needed (SUSE)
+          ansible.builtin.set_fact:
+            reboot_needed: "{{ suse_reboot_check.rc == 102 }}"
+
+    - name: Arch family upgrade
+      when: ansible_facts['os_family'] == 'Archlinux'
+      community.general.pacman:
+        upgrade: true
+        update_cache: true
+      register: upgrade_result
+
+    - name: Alpine upgrade
+      when: ansible_facts['os_family'] == 'Alpine'
+      community.general.apk:
+        upgrade: true
+        update_cache: true
+      register: upgrade_result
+
+    - name: Fail on unsupported OS family
+      ansible.builtin.fail:
+        msg: "Unsupported os_family: {{ ansible_facts['os_family'] }}"
+      when: upgrade_result is not defined
+
+    - name: Show upgrade result
+      ansible.builtin.debug:
+        msg: >-
+          changed={{ (upgrade_result.changed | default(false)) or (autoremove_result.changed | default(false)) }}
+          reboot_needed={{ reboot_needed | default(false) }}
+
+    - name: Reboot if required and allowed
+      ansible.builtin.reboot:
+        reboot_timeout: "{{ reboot_timeout }}"
+        msg: "Reboot after package upgrade (Ansible)"
+      when:
+        - auto_reboot | default(false) | bool
+        - reboot_needed | default(false) | bool
