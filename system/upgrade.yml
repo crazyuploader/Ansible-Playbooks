@@ -11,7 +11,8 @@
 - name: Upgrade all packages on all servers
   hosts: Servers
   become: true
-  gather_facts: true
+  # Facts are gathered in pre_tasks, after the reachability check.
+  gather_facts: false
   # An offline host must not abort the remaining serial batches.
   # Real task failures still abort the play.
   ignore_unreachable: true
@@ -20,6 +21,18 @@
 
   vars:
     reboot_timeout: 900
+
+  pre_tasks:
+    - name: Check host is reachable
+      ansible.builtin.ping:
+      register: reachability
+
+    - name: Skip unreachable host
+      ansible.builtin.meta: end_host
+      when: reachability is unreachable
+
+    - name: Gather facts
+      ansible.builtin.setup:
 
   tasks:
     - name: Debian family upgrade
