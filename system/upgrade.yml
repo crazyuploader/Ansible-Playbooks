@@ -12,6 +12,9 @@
   hosts: Servers
   become: true
   gather_facts: true
+  # An offline host must not abort the remaining serial batches.
+  # Real task failures still abort the play.
+  ignore_unreachable: true
   # One host at a time per batch so one bad upgrade does not hit the whole fleet.
   serial: "{{ upgrade_serial | default(1) }}"
 
