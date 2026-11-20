@@ -100,6 +100,9 @@ ansible-playbook path/to/playbook.yml -i your_inventory_file
 - **[Install Sendme](install/install-sendme.yml)**:
   This playbook installs [Sendme](https://www.iroh.computer/sendme), a peer-to-peer file transfer tool built on iroh. Pin a version with `-e sendme_version=v0.36.0` to skip the GitHub API call.
 
+- **[Install Tracerate](install/install-tracerate.yml)**:
+  This playbook installs [tracerate](https://github.com/crazyuploader/tracerate), a CLI internet speed tester, on any Linux distro (amd64/arm64). The binary is checksum-verified and placed in `/usr/local/bin`. It downloads the latest build from [executables.devjugal.com](https://executables.devjugal.com/tracerate) by default. Use `-e tracerate_source=github` for GitHub releases, or pin a version with `-e tracerate_version=v1.6.0` (always uses GitHub).
+
 - **[Install Zoxide](install/install-zoxide.yml)**:
   This playbook installs Zoxide, a command-line tool that provides a fuzzy finder for directories.
 

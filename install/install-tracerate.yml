@@ -1,0 +1,141 @@
+---
+# Installs tracerate (https://github.com/crazyuploader/tracerate) on any Linux distro.
+# No package manager is used: the binary is fetched, checksum-verified and
+# placed in /usr/local/bin.
+#
+# Sources:
+#   executables (default): latest raw binary from executables.devjugal.com
+#   github: release tarball from GitHub (supports pinning a version)
+#
+# Examples:
+#   ansible-playbook install/install-tracerate.yml -i inventory
+#   ansible-playbook install/install-tracerate.yml -i inventory -e tracerate_source=github
+#   ansible-playbook install/install-tracerate.yml -i inventory -e tracerate_version=v1.6.0
+- name: Install tracerate binary on all hosts
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    tracerate_source: executables
+    # Empty means latest. Setting a version forces the github source,
+    # because executables.devjugal.com only serves the latest build.
+    tracerate_version: ""
+    tracerate_install_path: /usr/local/bin/tracerate
+    tracerate_executables_url: https://executables.devjugal.com/tracerate/latest
+    tracerate_github_repo: crazyuploader/tracerate
+    # ansible architecture -> [executables suffix, github suffix]
+    tracerate_arch_map:
+      x86_64: [amd64, x86_64]
+      amd64: [amd64, x86_64]
+      aarch64: [arm64, arm64]
+      arm64: [arm64, arm64]
+
+  tasks:
+    - name: Check that the host is a supported Linux platform
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['system'] == 'Linux'
+          - ansible_facts['architecture'] in tracerate_arch_map
+        fail_msg: >-
+          tracerate has no build for {{ ansible_facts['system'] }}
+          {{ ansible_facts['architecture'] }}.
+        quiet: true
+
+    - name: Set tracerate facts
+      ansible.builtin.set_fact:
+        tracerate_effective_source: >-
+          {{ 'github' if tracerate_version | length > 0 else tracerate_source }}
+        tracerate_exe_arch: "{{ tracerate_arch_map[ansible_facts['architecture']][0] }}"
+        tracerate_gh_arch: "{{ tracerate_arch_map[ansible_facts['architecture']][1] }}"
+
+    - name: Ensure /usr/local/bin directory exists
+      ansible.builtin.file:
+        path: "{{ tracerate_install_path | dirname }}"
+        state: directory
+        mode: "0755"
+
+    # ---- executables.devjugal.com ----
+    # get_url skips the download when the existing file already matches the
+    # published checksum, so re-runs are idempotent.
+    - name: Install tracerate from executables.devjugal.com
+      ansible.builtin.get_url:
+        url: "{{ tracerate_executables_url }}/tracerate-linux-{{ tracerate_exe_arch }}"
+        checksum: "sha256:{{ tracerate_executables_url }}/tracerate-linux-{{ tracerate_exe_arch }}.sha256"
+        dest: "{{ tracerate_install_path }}"
+        owner: root
+        group: root
+        mode: "0755"
+      when: tracerate_effective_source == 'executables'
+
+    # ---- GitHub releases ----
+    - name: Install tracerate from GitHub releases
+      when: tracerate_effective_source == 'github'
+      block:
+        - name: Get latest tracerate release from GitHub
+          ansible.builtin.uri:
+            url: "https://api.github.com/repos/{{ tracerate_github_repo }}/releases/latest"
+            return_content: true
+          register: tracerate_release
+          when: tracerate_version | length == 0
+
+        - name: Set tracerate release tag
+          ansible.builtin.set_fact:
+            tracerate_tag: >-
+              {{ tracerate_release.json.tag_name if tracerate_version | length == 0
+                 else ('v' ~ (tracerate_version | regex_replace('^v', ''))) }}
+
+        - name: Check installed tracerate version
+          ansible.builtin.command: "{{ tracerate_install_path }} --version"
+          register: tracerate_installed
+          changed_when: false
+          failed_when: false
+
+        - name: Download and install tracerate release
+          when: >-
+            tracerate_installed.rc != 0 or
+            (tracerate_installed.stdout.split() | last) != (tracerate_tag | regex_replace('^v', ''))
+          block:
+            - name: Create temporary directory
+              ansible.builtin.tempfile:
+                state: directory
+                suffix: tracerate
+              register: tracerate_tmp
+
+            - name: Download tracerate release archive
+              ansible.builtin.get_url:
+                url: "https://github.com/{{ tracerate_github_repo }}/releases/download/{{ tracerate_tag }}/tracerate_Linux_{{ tracerate_gh_arch }}.tar.gz"
+                checksum: "sha256:https://github.com/{{ tracerate_github_repo }}/releases/download/{{ tracerate_tag }}/checksums.txt"
+                dest: "{{ tracerate_tmp.path }}/tracerate.tar.gz"
+                mode: "0644"
+
+            - name: Extract tracerate archive
+              ansible.builtin.unarchive:
+                src: "{{ tracerate_tmp.path }}/tracerate.tar.gz"
+                dest: "{{ tracerate_tmp.path }}"
+                remote_src: true
+
+            - name: Move tracerate binary into place
+              ansible.builtin.copy:
+                src: "{{ tracerate_tmp.path }}/tracerate"
+                dest: "{{ tracerate_install_path }}"
+                remote_src: true
+                owner: root
+                group: root
+                mode: "0755"
+
+          always:
+            - name: Clean up temporary directory
+              ansible.builtin.file:
+                path: "{{ tracerate_tmp.path }}"
+                state: absent
+              when: tracerate_tmp.path is defined
+
+    - name: Verify tracerate installation
+      ansible.builtin.command: "{{ tracerate_install_path }} --version"
+      register: tracerate_version_cmd
+      changed_when: false
+
+    - name: Print installed tracerate version
+      ansible.builtin.debug:
+        msg: "Installed {{ tracerate_version_cmd.stdout }} (source: {{ tracerate_effective_source }})"
