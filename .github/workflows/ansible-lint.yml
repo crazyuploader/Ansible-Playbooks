@@ -38,4 +38,5 @@ jobs:
             -not -path "**/host_vars/*.yml" \
             -not -path "**/group_vars/*.yml" \
             -not -name "requirements.yml" \
+            -not -name "*.example.yml" \
             -print0 | xargs -0 -I {} ansible-playbook --syntax-check {}
