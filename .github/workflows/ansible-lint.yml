@@ -20,7 +20,8 @@ jobs:
 
       - name: Install Ansible and Ansible Lint
         run: |
-          pip install ansible ansible-lint
+          # prometheus.prometheus 0.30.2 declares requires_ansible <=2.21.99
+          pip install ansible "ansible-core<2.22" ansible-lint
           ansible-galaxy collection install -r requirements.yml
 
       - name: Run Ansible Lint
